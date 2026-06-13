@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/dal";
 import Link from "next/link";
 import { DashboardCharts, type MonthStudentPoint, type MonthRevenuePoint, type AttendancePoint } from "@/app/components/DashboardCharts";
+import TeacherDashboard from "@/app/components/TeacherDashboard";
 
 function fmt(n: number) {
   return new Intl.NumberFormat("en-US").format(Math.round(n));
@@ -35,6 +36,11 @@ function dateKey(d: Date) {
 
 export default async function DashboardPage() {
   const session = await getSession();
+
+  if (session?.role === "TEACHER") {
+    return <TeacherDashboard session={session} />;
+  }
+
   const now = new Date();
   const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
   const currentMonth = now.getMonth() + 1;

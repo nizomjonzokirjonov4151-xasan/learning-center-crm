@@ -5,8 +5,11 @@ import { decrypt, SESSION_COOKIE } from "@/lib/session";
 const PUBLIC_ROUTES = ["/login", "/setup"];
 
 // Routes blocked per role (ADMIN bypasses all restrictions)
-const BLOCKED_FOR_MANAGER = ["/teachers", "/schedules", "/telegram"];
-const BLOCKED_FOR_TEACHER = ["/students", "/payments", "/teachers", "/telegram", "/debtors"];
+const BLOCKED_FOR_MANAGER = ["/teachers", "/schedules", "/telegram", "/users"];
+const BLOCKED_FOR_TEACHER = [
+  "/students", "/payments", "/teachers", "/telegram",
+  "/debtors", "/users", "/analytics", "/reports",
+];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;

@@ -28,6 +28,7 @@ export async function login(
         email: true,
         password: true,
         role: true,
+        isActive: true,
         teacherId: true,
       },
     });
@@ -39,6 +40,10 @@ export async function login(
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) {
       return { error: "Invalid email or password." };
+    }
+
+    if (!user.isActive) {
+      return { error: "Your account has been deactivated. Contact an administrator." };
     }
 
     await createSessionCookie({

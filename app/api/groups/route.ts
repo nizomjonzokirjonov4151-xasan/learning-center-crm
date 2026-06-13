@@ -1,10 +1,17 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { notifyNewGroup } from "@/lib/telegram";
+import { getSession } from "@/lib/dal";
 
 export async function GET() {
   try {
+    const session = await getSession();
+    const where =
+      session?.role === "TEACHER" && session.teacherId
+        ? { schedules: { some: { teacherId: session.teacherId } } }
+        : {};
     const groups = await prisma.group.findMany({
+      where,
       include: {
         _count: { select: { students: true } },
       },

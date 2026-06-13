@@ -25,6 +25,7 @@ model User {
   email     String   @unique
   password  String
   role      UserRole @default(MANAGER)
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   teacherId String?  @unique
   teacher   Teacher? @relation(fields: [teacherId], references: [id], onDelete: SetNull)
