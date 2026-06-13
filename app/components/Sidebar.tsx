@@ -172,14 +172,27 @@ const NAV_ITEMS: NavItem[] = [
   },
 ];
 
-export default function Sidebar({ user }: { user: SidebarUser }) {
+export default function Sidebar({
+  user,
+  isOpen = false,
+  onClose = () => {},
+}: {
+  user: SidebarUser;
+  isOpen?: boolean;
+  onClose?: () => void;
+}) {
   const pathname = usePathname();
   const visibleNav = NAV_ITEMS.filter((item) => item.roles.includes(user.role));
 
   return (
-    <aside className="w-64 bg-gray-900 text-white flex flex-col flex-shrink-0 min-h-screen">
-      {/* Logo */}
-      <div className="px-6 py-5 border-b border-gray-800">
+    <aside
+      className={`fixed inset-y-0 left-0 z-50 flex flex-col w-64 bg-gray-900 text-white flex-shrink-0
+        transition-transform duration-200 ease-in-out
+        lg:static lg:translate-x-0 lg:z-auto lg:min-h-screen
+        ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
+    >
+      {/* Logo + mobile close button */}
+      <div className="px-6 py-5 border-b border-gray-800 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-sm font-bold flex-shrink-0">
             O
@@ -189,6 +202,15 @@ export default function Sidebar({ user }: { user: SidebarUser }) {
             <p className="text-xs text-gray-400">CRM System</p>
           </div>
         </div>
+        <button
+          onClick={onClose}
+          className="lg:hidden p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-colors"
+          aria-label="Close menu"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+          </svg>
+        </button>
       </div>
 
       {/* Navigation */}
@@ -199,6 +221,7 @@ export default function Sidebar({ user }: { user: SidebarUser }) {
             <Link
               key={label}
               href={href}
+              onClick={onClose}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                 isActive
                   ? "bg-blue-600 text-white"

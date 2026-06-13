@@ -306,7 +306,7 @@ export default function ReportsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto px-6 py-8 space-y-10">
+      <div className="max-w-6xl mx-auto px-4 py-6 sm:px-6 sm:py-8 space-y-10">
 
         {/* ── Page header ─────────────────────────────────────────────────── */}
         <div className="flex items-start justify-between gap-4 flex-wrap">

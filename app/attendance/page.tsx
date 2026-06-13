@@ -300,7 +300,7 @@ export default function AttendancePage() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 py-10 px-8">
+    <div className="min-h-screen bg-gray-50 py-6 px-4 sm:py-10 sm:px-8">
       <div className="max-w-5xl mx-auto space-y-6">
         {/* Header */}
         <div>

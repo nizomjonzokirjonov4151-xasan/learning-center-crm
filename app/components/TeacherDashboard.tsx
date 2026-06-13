@@ -72,7 +72,7 @@ export default async function TeacherDashboard({ session }: { session: SessionPa
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto px-6 py-8 space-y-8">
+      <div className="max-w-6xl mx-auto px-4 py-6 sm:px-6 sm:py-8 space-y-8">
 
         {/* Header */}
         <div className="flex items-center justify-between gap-4 flex-wrap">
