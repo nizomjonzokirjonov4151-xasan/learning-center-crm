@@ -22,6 +22,7 @@ type User = {
   createdAt: string;
   teacherId: string | null;
   teacher: TeacherInfo | null;
+  _count?: { userSessions: number };
 };
 
 // ── Style constants ──────────────────────────────────────────────────────────
@@ -413,6 +414,11 @@ export default function UsersPage() {
                             <div className="min-w-0">
                               <p className="font-medium text-gray-900 truncate">{user.fullName}</p>
                               <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                              {(user._count?.userSessions ?? 0) > 0 && (
+                                <p className="text-xs text-blue-500 mt-0.5">
+                                  {user._count!.userSessions} active {user._count!.userSessions === 1 ? "session" : "sessions"}
+                                </p>
+                              )}
                             </div>
                           </div>
                         </td>

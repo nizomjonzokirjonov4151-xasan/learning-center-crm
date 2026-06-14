@@ -20,15 +20,39 @@ enum UserRole {
 }
 
 model User {
+  id                  String          @id @default(cuid())
+  fullName            String
+  email               String          @unique
+  password            String
+  role                UserRole        @default(MANAGER)
+  isActive            Boolean         @default(true)
+  forcePasswordChange Boolean         @default(false)
+  createdAt           DateTime        @default(now())
+  teacherId           String?         @unique
+  teacher             Teacher?        @relation(fields: [teacherId], references: [id], onDelete: SetNull)
+  loginActivities     LoginActivity[]
+  userSessions        UserSession[]
+}
+
+model UserSession {
+  id         String   @id @default(cuid())
+  userId     String
+  token      String   @unique
+  userAgent  String?
+  ipAddress  String?
+  isCurrent  Boolean  @default(false)
+  lastSeenAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model LoginActivity {
   id        String   @id @default(cuid())
-  fullName  String
-  email     String   @unique
-  password  String
-  role      UserRole @default(MANAGER)
-  isActive  Boolean  @default(true)
+  userId    String
+  ipAddress String?
+  userAgent String?
   createdAt DateTime @default(now())
-  teacherId String?  @unique
-  teacher   Teacher? @relation(fields: [teacherId], references: [id], onDelete: SetNull)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Group {

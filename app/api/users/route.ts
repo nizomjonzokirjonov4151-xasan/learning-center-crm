@@ -22,6 +22,9 @@ export async function GET() {
         teacher: {
           select: { id: true, fullName: true, subject: true, phone: true, salary: true },
         },
+        _count: {
+          select: { userSessions: true },
+        },
       },
     });
     return NextResponse.json(users);
@@ -80,6 +83,7 @@ export async function POST(request: Request) {
             password: hashed,
             role: "TEACHER",
             teacherId: teacher.id,
+            forcePasswordChange: true,
           },
           select: {
             id: true, fullName: true, email: true, role: true,

@@ -11,6 +11,8 @@ export type SessionPayload = {
   fullName: string;
   email: string;
   teacherId: string | null;
+  forcePasswordChange: boolean;
+  sessionToken?: string;
 };
 
 export async function encrypt(payload: SessionPayload): Promise<string> {

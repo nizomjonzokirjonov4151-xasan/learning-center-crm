@@ -35,6 +35,11 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/", request.nextUrl));
   }
 
+  // Force password change: lock user to the security page until they comply
+  if (session.forcePasswordChange && !pathname.startsWith("/profile/security")) {
+    return NextResponse.redirect(new URL("/profile/security", request.nextUrl));
+  }
+
   // Role-based page access
   if (session.role === "MANAGER") {
     if (BLOCKED_FOR_MANAGER.some((r) => pathname.startsWith(r))) {

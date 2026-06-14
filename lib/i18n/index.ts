@@ -70,6 +70,8 @@ export type Translations = {
     reports: string
     telegramBot: string
     users: string
+    security: string
+    sessions: string
     signOut: string
     crmSystem: string
   }
@@ -463,6 +465,46 @@ export type Translations = {
     quickActions: string
     recordAttendance: string
     viewMyGroups: string
+  }
+  security: {
+    title: string
+    subtitle: string
+    changePassword: string
+    currentPassword: string
+    newPassword: string
+    confirmPassword: string
+    minChars: string
+    passwordMismatch: string
+    passwordChanged: string
+    savePassword: string
+    loginActivity: string
+    loginActivitySubtitle: string
+    noActivity: string
+    ipAddress: string
+    device: string
+    unknown: string
+    forceChangeTitle: string
+    forceChangeDesc: string
+  }
+  sessions: {
+    title: string
+    subtitle: string
+    currentDevice: string
+    otherDevices: string
+    noOtherDevices: string
+    signOutDevice: string
+    signingOut: string
+    signOutOthers: string
+    signingOutOthers: string
+    lastSeen: string
+    signedIn: string
+    ipAddress: string
+    unknown: string
+    thisDevice: string
+    justNow: string
+    minutesAgo: string
+    hoursAgo: string
+    daysAgo: string
   }
 }
 

@@ -20,7 +20,10 @@ export async function POST(request: NextRequest, { params }: Params) {
     }
 
     const hashed = await bcrypt.hash(password, 12);
-    await prisma.user.update({ where: { id }, data: { password: hashed } });
+    await prisma.user.update({
+      where: { id },
+      data: { password: hashed, forcePasswordChange: true },
+    });
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("[POST /api/users/[id]/reset-password]", error);

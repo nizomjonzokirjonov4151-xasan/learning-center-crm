@@ -1,9 +1,10 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
-import { createSessionCookie, deleteSessionCookie } from "@/lib/dal";
+import { createSession, deleteSessionCookie } from "@/lib/dal";
 
 export type LoginState = { error?: string } | undefined;
 
@@ -30,6 +31,7 @@ export async function login(
         role: true,
         isActive: true,
         teacherId: true,
+        forcePasswordChange: true,
       },
     });
 
@@ -46,13 +48,29 @@ export async function login(
       return { error: "Your account has been deactivated. Contact an administrator." };
     }
 
-    await createSessionCookie({
-      userId: user.id,
-      role: user.role,
-      fullName: user.fullName,
-      email: user.email,
-      teacherId: user.teacherId ?? null,
+    // Log this login attempt
+    const headersList = await headers();
+    const ipAddress =
+      headersList.get("x-forwarded-for")?.split(",")[0].trim() ??
+      headersList.get("x-real-ip") ??
+      null;
+    const userAgent = headersList.get("user-agent") ?? null;
+
+    await prisma.loginActivity.create({
+      data: { userId: user.id, ipAddress, userAgent },
     });
+
+    await createSession(
+      {
+        userId: user.id,
+        role: user.role,
+        fullName: user.fullName,
+        email: user.email,
+        teacherId: user.teacherId ?? null,
+        forcePasswordChange: user.forcePasswordChange,
+      },
+      { ipAddress, userAgent }
+    );
 
     shouldRedirect = true;
   } catch (err) {
