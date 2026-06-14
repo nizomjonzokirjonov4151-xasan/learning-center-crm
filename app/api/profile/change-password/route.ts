@@ -56,6 +56,7 @@ export async function POST(request: NextRequest) {
       fullName: session.fullName,
       email: session.email,
       teacherId: session.teacherId,
+      parentId: session.parentId,
       forcePasswordChange: false,
       sessionToken: session.sessionToken,
     });

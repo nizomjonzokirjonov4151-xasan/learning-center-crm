@@ -7,10 +7,11 @@ const encodedKey = new TextEncoder().encode(secretKey);
 
 export type SessionPayload = {
   userId: string;
-  role: "ADMIN" | "MANAGER" | "TEACHER";
+  role: "ADMIN" | "MANAGER" | "TEACHER" | "PARENT";
   fullName: string;
   email: string;
   teacherId: string | null;
+  parentId: string | null;
   forcePasswordChange: boolean;
   sessionToken?: string;
 };

@@ -60,6 +60,16 @@ export async function login(
       data: { userId: user.id, ipAddress, userAgent },
     });
 
+    // Resolve parentId for PARENT role users
+    let parentId: string | null = null;
+    if (user.role === "PARENT") {
+      const parent = await prisma.parent.findUnique({
+        where: { userId: user.id },
+        select: { id: true },
+      });
+      parentId = parent?.id ?? null;
+    }
+
     await createSession(
       {
         userId: user.id,
@@ -67,6 +77,7 @@ export async function login(
         fullName: user.fullName,
         email: user.email,
         teacherId: user.teacherId ?? null,
+        parentId,
         forcePasswordChange: user.forcePasswordChange,
       },
       { ipAddress, userAgent }

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import AppShell from "@/app/components/AppShell";
+import ParentShell from "@/app/components/ParentShell";
 import { getSession } from "@/lib/dal";
 import { I18nProvider } from "@/lib/i18n/provider";
 
@@ -35,15 +36,23 @@ export default async function RootLayout({
       <body className="min-h-screen">
         <I18nProvider>
           {session ? (
-            <AppShell
-              user={{
-                fullName: session.fullName,
-                email: session.email,
-                role: session.role,
-              }}
-            >
-              {children}
-            </AppShell>
+            session.role === "PARENT" ? (
+              <ParentShell
+                user={{ fullName: session.fullName, email: session.email }}
+              >
+                {children}
+              </ParentShell>
+            ) : (
+              <AppShell
+                user={{
+                  fullName: session.fullName,
+                  email: session.email,
+                  role: session.role,
+                }}
+              >
+                {children}
+              </AppShell>
+            )
           ) : (
             <main className="min-h-screen">{children}</main>
           )}
