@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -67,87 +68,6 @@ const icons = {
   ),
 };
 
-// ── Report definitions ────────────────────────────────────────────────────────
-
-const PDF_REPORTS: ReportCard[] = [
-  {
-    key: "pdf-students",
-    title: "Students Report",
-    description: "All students with name, phone, group, and enrollment date.",
-    url: "/api/reports/students/pdf",
-    filename: "students-report.pdf",
-    icon: icons.users,
-  },
-  {
-    key: "pdf-teachers",
-    title: "Teachers Report",
-    description: "All teachers with subject, salary, and active status.",
-    url: "/api/reports/teachers/pdf",
-    filename: "teachers-report.pdf",
-    icon: icons.teacher,
-  },
-  {
-    key: "pdf-groups",
-    title: "Groups Report",
-    description: "All groups with description and enrolled student count.",
-    url: "/api/reports/groups/pdf",
-    filename: "groups-report.pdf",
-    icon: icons.folder,
-  },
-  {
-    key: "pdf-payments",
-    title: "Payments Report",
-    description: "Full payment history with amounts, periods, and student names.",
-    url: "/api/reports/payments/pdf",
-    filename: "payments-report.pdf",
-    icon: icons.payment,
-  },
-  {
-    key: "pdf-attendance",
-    title: "Attendance Report",
-    description: "Latest 500 attendance records with present / absent / late status.",
-    url: "/api/reports/attendance/pdf",
-    filename: "attendance-report.pdf",
-    icon: icons.attendance,
-    badge: "Latest 500",
-  },
-];
-
-const EXCEL_REPORTS: ReportCard[] = [
-  {
-    key: "xl-students",
-    title: "Students",
-    description: "Full student list with group assignments, exportable for analysis.",
-    url: "/api/reports/students/excel",
-    filename: "students.xlsx",
-    icon: icons.users,
-  },
-  {
-    key: "xl-teachers",
-    title: "Teachers",
-    description: "Teacher roster with salary figures and status flags.",
-    url: "/api/reports/teachers/excel",
-    filename: "teachers.xlsx",
-    icon: icons.teacher,
-  },
-  {
-    key: "xl-payments",
-    title: "Payments",
-    description: "Payment history with auto-summed total row at the bottom.",
-    url: "/api/reports/payments/excel",
-    filename: "payments.xlsx",
-    icon: icons.payment,
-  },
-  {
-    key: "xl-attendance",
-    title: "Attendance",
-    description: "Up to 5,000 attendance records with color-coded status column.",
-    url: "/api/reports/attendance/excel",
-    filename: "attendance.xlsx",
-    icon: icons.attendance,
-    badge: "Up to 5,000",
-  },
-];
 
 // ── Download card ─────────────────────────────────────────────────────────────
 
@@ -162,6 +82,7 @@ function DownloadCard({
   type: "pdf" | "excel";
   onDownload: (card: ReportCard) => void;
 }) {
+  const { t } = useTranslation();
   const isPdf = type === "pdf";
   const accent = isPdf ? "text-red-600" : "text-green-600";
   const accentBg = isPdf ? "bg-red-50" : "bg-green-50";
@@ -213,25 +134,25 @@ function DownloadCard({
         {status === "idle" && (
           <>
             {icons.download}
-            Download {isPdf ? "PDF" : "Excel"}
+            {t.reports.download} {isPdf ? "PDF" : "Excel"}
           </>
         )}
         {status === "loading" && (
           <>
             {icons.spinner}
-            Generating…
+            {t.reports.downloading}
           </>
         )}
         {status === "success" && (
           <>
             {icons.check}
-            Downloaded!
+            {t.reports.downloaded}
           </>
         )}
         {status === "error" && (
           <>
             {icons.error}
-            Failed — Retry
+            {t.telegram.saveFailed}
           </>
         )}
       </button>
@@ -273,7 +194,22 @@ function SectionHeader({
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function ReportsPage() {
+  const { t } = useTranslation();
   const [statuses, setStatuses] = useState<Record<string, DownloadStatus>>({});
+
+  const PDF_REPORTS: ReportCard[] = [
+    { key: "pdf-students", title: t.reports.studentsReport, description: t.reports.studentsReportDesc, url: "/api/reports/students/pdf", filename: "students-report.pdf", icon: icons.users },
+    { key: "pdf-teachers", title: t.reports.teachersReport, description: t.reports.teachersReportDesc, url: "/api/reports/teachers/pdf", filename: "teachers-report.pdf", icon: icons.teacher },
+    { key: "pdf-groups", title: t.reports.groupsReport, description: t.reports.groupsReportDesc, url: "/api/reports/groups/pdf", filename: "groups-report.pdf", icon: icons.folder },
+    { key: "pdf-payments", title: t.reports.paymentsReport, description: t.reports.paymentsReportDesc, url: "/api/reports/payments/pdf", filename: "payments-report.pdf", icon: icons.payment },
+    { key: "pdf-attendance", title: t.reports.attendanceReport, description: t.reports.attendanceReportDesc, url: "/api/reports/attendance/pdf", filename: "attendance-report.pdf", icon: icons.attendance, badge: "Latest 500" },
+  ];
+  const EXCEL_REPORTS: ReportCard[] = [
+    { key: "xl-students", title: t.reports.studentsReport, description: t.reports.studentsReportDesc, url: "/api/reports/students/excel", filename: "students.xlsx", icon: icons.users },
+    { key: "xl-teachers", title: t.reports.teachersReport, description: t.reports.teachersReportDesc, url: "/api/reports/teachers/excel", filename: "teachers.xlsx", icon: icons.teacher },
+    { key: "xl-payments", title: t.reports.paymentsReport, description: t.reports.paymentsReportDesc, url: "/api/reports/payments/excel", filename: "payments.xlsx", icon: icons.payment },
+    { key: "xl-attendance", title: t.reports.attendanceReport, description: t.reports.attendanceReportDesc, url: "/api/reports/attendance/excel", filename: "attendance.xlsx", icon: icons.attendance, badge: "Up to 5,000" },
+  ];
 
   function setStatus(key: string, s: DownloadStatus) {
     setStatuses((prev) => ({ ...prev, [key]: s }));
@@ -311,16 +247,14 @@ export default function ReportsPage() {
         {/* ── Page header ─────────────────────────────────────────────────── */}
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Reports</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              Download formatted PDF and Excel reports with real-time data from your CRM.
-            </p>
+            <h1 className="text-2xl font-bold text-gray-900">{t.reports.title}</h1>
+            <p className="mt-1 text-sm text-gray-500">{t.reports.subtitle}</p>
           </div>
           <div className="flex items-center gap-2 text-xs text-gray-500 bg-white border border-gray-200 rounded-xl px-4 py-2.5 shadow-sm">
             <svg className="w-3.5 h-3.5 text-green-500" fill="currentColor" viewBox="0 0 8 8">
               <circle cx="4" cy="4" r="3" />
             </svg>
-            Reports generated on demand
+            {t.reports.generatedOnDemand}
           </div>
         </div>
 
@@ -330,19 +264,17 @@ export default function ReportsPage() {
             <path strokeLinecap="round" strokeLinejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />
           </svg>
           <div className="text-sm">
-            <p className="font-semibold">Live data reports</p>
-            <p className="text-blue-700 mt-0.5">
-              Each download fetches the latest data from the database at the moment you click. Reports are not cached.
-            </p>
+            <p className="font-semibold">{t.reports.liveData}</p>
+            <p className="text-blue-700 mt-0.5">{t.reports.liveDataDesc}</p>
           </div>
         </div>
 
         {/* ── PDF Reports ─────────────────────────────────────────────────── */}
         <section className="space-y-5">
           <SectionHeader
-            badge={`${PDF_REPORTS.length} reports`}
-            title="PDF Reports"
-            subtitle="Formatted documents ready for printing, sharing, and archiving."
+            badge={`${PDF_REPORTS.length}`}
+            title={t.reports.pdfReports}
+            subtitle={t.reports.pdfSubtitle}
             icon={
               <svg className="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
@@ -368,9 +300,9 @@ export default function ReportsPage() {
         {/* ── Excel Reports ────────────────────────────────────────────────── */}
         <section className="space-y-5">
           <SectionHeader
-            badge={`${EXCEL_REPORTS.length} exports`}
-            title="Excel Exports"
-            subtitle="Structured spreadsheets with styled headers, frozen rows, and totals — open in Excel or Google Sheets."
+            badge={`${EXCEL_REPORTS.length}`}
+            title={t.reports.excelReports}
+            subtitle={t.reports.excelSubtitle}
             icon={
               <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 0 1-1.125-1.125M3.375 19.5h1.5C5.496 19.5 6 18.996 6 18.375m-3.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-1.5A1.125 1.125 0 0 1 18 18.375M20.625 4.5H3.375m17.25 0c.621 0 1.125.504 1.125 1.125M20.625 4.5h-1.5C18.504 4.5 18 5.004 18 5.625m3.75 0v1.5c0 .621-.504 1.125-1.125 1.125M3.375 4.5c-.621 0-1.125.504-1.125 1.125M3.375 4.5h1.5C5.496 4.5 6 5.004 6 5.625m-3.75 0v1.5c0 .621.504 1.125 1.125 1.125m0 0h1.5m-1.5 0c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m1.5-3.75C5.496 8.25 6 7.746 6 7.125v-1.5M4.875 8.25C5.496 8.25 6 8.754 6 9.375v1.5m0-5.25v5.25m0-5.25C6 5.004 6.504 4.5 7.125 4.5h9.75c.621 0 1.125.504 1.125 1.125m1.125 2.625h1.5m-1.5 0A1.125 1.125 0 0 1 18 7.125v-1.5m1.125 2.625c-.621 0-1.125.504-1.125 1.125v1.5m2.625-2.625c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125M18 5.625v5.25M7.125 12h9.75m-9.75 0A1.125 1.125 0 0 1 6 10.875M7.125 12C6.504 12 6 12.504 6 13.125m0-2.25C6 11.496 5.496 12 4.875 12M18 10.875c0 .621-.504 1.125-1.125 1.125M18 10.875c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-12 5.25v-5.25m0 5.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125m-12 0v-1.5c0-.621-.504-1.125-1.125-1.125M7.125 15l3.375 3.375M7.125 18.375 10.5 15m6.375-5.25v-.75A1.125 1.125 0 0 0 15.75 7.875h-.75M10.5 8.625v-.75A1.125 1.125 0 0 0 9.375 6.75h-.75M7.125 12H6.75a1.125 1.125 0 0 0-1.125 1.125v.75m12.375-1.875h.75a1.125 1.125 0 0 1 1.125 1.125v.75" />
@@ -394,9 +326,9 @@ export default function ReportsPage() {
         <section className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h3 className="text-sm font-bold text-gray-900">Download All Reports</h3>
+              <h3 className="text-sm font-bold text-gray-900">{t.reports.pdfReports} + {t.reports.excelReports}</h3>
               <p className="text-xs text-gray-500 mt-1">
-                Queue all {PDF_REPORTS.length + EXCEL_REPORTS.length} downloads at once. Browsers may ask for permission to download multiple files.
+                {PDF_REPORTS.length + EXCEL_REPORTS.length}
               </p>
             </div>
             <div className="flex items-center gap-3 flex-shrink-0">

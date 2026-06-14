@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import type { SessionPayload } from "@/lib/session";
+import { getServerTranslations } from "@/lib/i18n";
 
 async function safe<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
   try { return await fn(); } catch { return fallback; }
@@ -13,6 +14,8 @@ const STATUS_STYLES: Record<string, string> = {
 };
 
 export default async function TeacherDashboard({ session }: { session: SessionPayload }) {
+  const { t, dateLocale } = await getServerTranslations();
+
   const now = new Date();
   const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
   const teacherId = session.teacherId;
@@ -66,7 +69,16 @@ export default async function TeacherDashboard({ session }: { session: SessionPa
   const attendancePct =
     todayAttendance.length > 0 ? Math.round((presentToday / todayAttendance.length) * 100) : null;
 
-  const DAY_NAMES = ["", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  // dayOfWeek: 1=Mon...7=Sun. Jan 1 2024 was a Monday.
+  const getDayName = (day: number) =>
+    new Date(2024, 0, day).toLocaleDateString(dateLocale, { weekday: "short" });
+
+  const STATUS_LABELS: Record<string, string> = {
+    PRESENT: t.attendance.present,
+    ABSENT: t.attendance.absent,
+    LATE: t.attendance.late,
+  };
+
   const JS_DAY_TO_SCHEMA = [7, 1, 2, 3, 4, 5, 6];
   const todaySchemaDay = JS_DAY_TO_SCHEMA[now.getDay()];
 
@@ -78,20 +90,20 @@ export default async function TeacherDashboard({ session }: { session: SessionPa
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
-              Welcome back, {session.fullName}
+              {t.dashboard.welcomeBack}, {session.fullName}
             </h1>
             <p className="mt-1 text-sm text-gray-500">
-              {now.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+              {now.toLocaleDateString(dateLocale, { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
             </p>
           </div>
           <span className="text-xs font-semibold px-3 py-1.5 rounded-full border bg-emerald-100 text-emerald-700 border-emerald-200">
-            Teacher
+            {t.dashboard.teacher}
           </span>
         </div>
 
         {/* KPI cards */}
         <section>
-          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">Overview</h2>
+          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">{t.teacherDashboard.overview}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-white rounded-2xl border border-gray-200 border-l-4 border-l-blue-500 p-5 flex items-start gap-4 shadow-sm">
               <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
@@ -100,9 +112,9 @@ export default async function TeacherDashboard({ session }: { session: SessionPa
                 </svg>
               </div>
               <div>
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide leading-none">My Groups</p>
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide leading-none">{t.teacherDashboard.myGroups}</p>
                 <p className="text-2xl font-bold text-gray-900 mt-1.5 leading-none">{myGroups.length}</p>
-                <p className="text-xs text-gray-400 mt-1.5">assigned groups</p>
+                <p className="text-xs text-gray-400 mt-1.5">{t.teacherDashboard.assignedGroups}</p>
               </div>
             </div>
 
@@ -113,9 +125,9 @@ export default async function TeacherDashboard({ session }: { session: SessionPa
                 </svg>
               </div>
               <div>
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide leading-none">My Students</p>
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide leading-none">{t.teacherDashboard.myStudents}</p>
                 <p className="text-2xl font-bold text-gray-900 mt-1.5 leading-none">{totalStudents}</p>
-                <p className="text-xs text-gray-400 mt-1.5">across all groups</p>
+                <p className="text-xs text-gray-400 mt-1.5">{t.teacherDashboard.acrossAllGroups}</p>
               </div>
             </div>
 
@@ -126,14 +138,14 @@ export default async function TeacherDashboard({ session }: { session: SessionPa
                 </svg>
               </div>
               <div>
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide leading-none">Today&apos;s Attendance</p>
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide leading-none">{t.teacherDashboard.todaysAttendance}</p>
                 <p className="text-2xl font-bold text-gray-900 mt-1.5 leading-none">
                   {attendancePct !== null ? `${attendancePct}%` : "—"}
                 </p>
                 <p className="text-xs text-gray-400 mt-1.5">
                   {todayAttendance.length > 0
-                    ? `${presentToday} present · ${absentToday} absent · ${lateToday} late`
-                    : "Not recorded yet"}
+                    ? `${presentToday} ${t.dashboard.present} · ${absentToday} ${t.dashboard.absent} · ${lateToday} ${t.dashboard.late}`
+                    : t.teacherDashboard.notRecordedYet}
                 </p>
               </div>
             </div>
@@ -144,13 +156,13 @@ export default async function TeacherDashboard({ session }: { session: SessionPa
           {/* My Groups */}
           <section>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest">My Groups</h2>
-              <Link href="/groups" className="text-xs text-blue-600 hover:underline font-medium">View all →</Link>
+              <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest">{t.teacherDashboard.myGroupsList}</h2>
+              <Link href="/groups" className="text-xs text-blue-600 hover:underline font-medium">{t.teacherDashboard.viewAll}</Link>
             </div>
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
               {myGroups.length === 0 ? (
                 <div className="px-5 py-10 text-center text-sm text-gray-400">
-                  No groups assigned yet.
+                  {t.teacherDashboard.noGroupsAssigned}
                 </div>
               ) : (
                 <ul className="divide-y divide-gray-50">
@@ -162,7 +174,7 @@ export default async function TeacherDashboard({ session }: { session: SessionPa
                           <div className="min-w-0">
                             <p className="font-medium text-gray-900 truncate">{g.name}</p>
                             <p className="text-xs text-gray-400 mt-0.5">
-                              {g._count.students} student{g._count.students !== 1 ? "s" : ""}
+                              {g._count.students} {t.teacherDashboard.students}
                             </p>
                           </div>
                           {todaySchedules.length > 0 ? (
@@ -175,7 +187,7 @@ export default async function TeacherDashboard({ session }: { session: SessionPa
                               <p className="text-xs text-gray-400">{todaySchedules[0]?.room}</p>
                             </div>
                           ) : (
-                            <span className="text-xs text-gray-300 flex-shrink-0">No class today</span>
+                            <span className="text-xs text-gray-300 flex-shrink-0">{t.teacherDashboard.noClassToday}</span>
                           )}
                         </div>
                       </li>
@@ -189,16 +201,16 @@ export default async function TeacherDashboard({ session }: { session: SessionPa
           {/* Today's Attendance */}
           <section>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest">Today&apos;s Attendance</h2>
-              <Link href="/attendance" className="text-xs text-blue-600 hover:underline font-medium">Record →</Link>
+              <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest">{t.teacherDashboard.todaysAttendanceSection}</h2>
+              <Link href="/attendance" className="text-xs text-blue-600 hover:underline font-medium">{t.teacherDashboard.recordLink}</Link>
             </div>
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
               {todayAttendance.length === 0 ? (
                 <div className="px-5 py-10 text-center text-sm text-gray-400">
-                  No attendance recorded today.
+                  {t.teacherDashboard.noAttendanceToday}
                   <div className="mt-3">
                     <Link href="/attendance" className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:underline">
-                      Record now →
+                      {t.teacherDashboard.recordNow}
                     </Link>
                   </div>
                 </div>
@@ -214,7 +226,7 @@ export default async function TeacherDashboard({ session }: { session: SessionPa
                         <p className="text-xs text-gray-400 truncate">{a.group.name}</p>
                       </div>
                       <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${STATUS_STYLES[a.status]}`}>
-                        {a.status.charAt(0) + a.status.slice(1).toLowerCase()}
+                        {STATUS_LABELS[a.status] ?? (a.status.charAt(0) + a.status.slice(1).toLowerCase())}
                       </span>
                     </li>
                   ))}
@@ -227,13 +239,13 @@ export default async function TeacherDashboard({ session }: { session: SessionPa
         {/* My Schedule */}
         {mySchedules.length > 0 && (
           <section>
-            <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">My Schedule</h2>
+            <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">{t.teacherDashboard.mySchedule}</h2>
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50 border-b border-gray-100">
                     <tr>
-                      {["Day", "Group", "Time", "Room"].map((h) => (
+                      {[t.teacherDashboard.day, t.teacherDashboard.group, t.teacherDashboard.time, t.teacherDashboard.room].map((h) => (
                         <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
                           {h}
                         </th>
@@ -245,9 +257,9 @@ export default async function TeacherDashboard({ session }: { session: SessionPa
                       <tr key={s.id} className={`hover:bg-gray-50 transition-colors ${s.dayOfWeek === todaySchemaDay ? "bg-blue-50/40" : ""}`}>
                         <td className="px-4 py-3">
                           <span className={`font-medium ${s.dayOfWeek === todaySchemaDay ? "text-blue-600" : "text-gray-700"}`}>
-                            {DAY_NAMES[s.dayOfWeek]}
+                            {getDayName(s.dayOfWeek)}
                             {s.dayOfWeek === todaySchemaDay && (
-                              <span className="ml-1.5 text-xs font-normal text-blue-500">(today)</span>
+                              <span className="ml-1.5 text-xs font-normal text-blue-500">({t.teacherDashboard.today})</span>
                             )}
                           </span>
                         </td>
@@ -265,7 +277,7 @@ export default async function TeacherDashboard({ session }: { session: SessionPa
 
         {/* Quick Actions */}
         <section>
-          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">Quick Actions</h2>
+          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">{t.teacherDashboard.quickActions}</h2>
           <div className="grid grid-cols-2 gap-3">
             <Link
               href="/attendance"
@@ -274,7 +286,7 @@ export default async function TeacherDashboard({ session }: { session: SessionPa
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
               </svg>
-              Record Attendance
+              {t.teacherDashboard.recordAttendance}
             </Link>
             <Link
               href="/groups"
@@ -283,7 +295,7 @@ export default async function TeacherDashboard({ session }: { session: SessionPa
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v8.25A2.25 2.25 0 0 0 4.5 16.5h15a2.25 2.25 0 0 0 2.25-2.25V8.25A2.25 2.25 0 0 0 19.5 6h-5.69a1.5 1.5 0 0 1-1.06-.44Z" />
               </svg>
-              View My Groups
+              {t.teacherDashboard.viewMyGroups}
             </Link>
           </div>
         </section>

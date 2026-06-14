@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logout } from "@/lib/auth-actions";
+import { useTranslation } from "@/lib/i18n/useTranslation";
+import { LanguageSwitcher } from "@/app/components/LanguageSwitcher";
 
 type SidebarUser = {
   fullName: string;
@@ -10,11 +12,6 @@ type SidebarUser = {
   role: "ADMIN" | "MANAGER" | "TEACHER";
 };
 
-const ROLE_LABELS: Record<string, string> = {
-  ADMIN: "Administrator",
-  MANAGER: "Manager",
-  TEACHER: "Teacher",
-};
 
 const ROLE_COLORS: Record<string, string> = {
   ADMIN: "bg-violet-100 text-violet-700",
@@ -22,17 +19,19 @@ const ROLE_COLORS: Record<string, string> = {
   TEACHER: "bg-emerald-100 text-emerald-700",
 };
 
-type NavItem = {
+import type { Translations } from "@/lib/i18n";
+
+type NavItemDef = {
   href: string;
-  label: string;
+  labelKey: keyof Translations["nav"];
   roles: Array<"ADMIN" | "MANAGER" | "TEACHER">;
   icon: React.ReactNode;
 };
 
-const NAV_ITEMS: NavItem[] = [
+const NAV_ITEMS: NavItemDef[] = [
   {
     href: "/",
-    label: "Dashboard",
+    labelKey: "dashboard",
     roles: ["ADMIN", "MANAGER", "TEACHER"],
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -42,7 +41,7 @@ const NAV_ITEMS: NavItem[] = [
   },
   {
     href: "/students",
-    label: "Students",
+    labelKey: "students",
     roles: ["ADMIN", "MANAGER"],
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -52,7 +51,7 @@ const NAV_ITEMS: NavItem[] = [
   },
   {
     href: "/groups",
-    label: "Groups",
+    labelKey: "groups",
     roles: ["ADMIN", "MANAGER"],
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -62,7 +61,7 @@ const NAV_ITEMS: NavItem[] = [
   },
   {
     href: "/groups",
-    label: "My Groups",
+    labelKey: "myGroups",
     roles: ["TEACHER"],
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -72,7 +71,7 @@ const NAV_ITEMS: NavItem[] = [
   },
   {
     href: "/attendance",
-    label: "Attendance",
+    labelKey: "attendance",
     roles: ["ADMIN", "MANAGER", "TEACHER"],
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -82,7 +81,7 @@ const NAV_ITEMS: NavItem[] = [
   },
   {
     href: "/debtors",
-    label: "Debtors",
+    labelKey: "debtors",
     roles: ["ADMIN", "MANAGER"],
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -92,7 +91,7 @@ const NAV_ITEMS: NavItem[] = [
   },
   {
     href: "/payments",
-    label: "Payments",
+    labelKey: "payments",
     roles: ["ADMIN", "MANAGER"],
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -102,7 +101,7 @@ const NAV_ITEMS: NavItem[] = [
   },
   {
     href: "/teachers",
-    label: "Teachers",
+    labelKey: "teachers",
     roles: ["ADMIN"],
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -112,7 +111,7 @@ const NAV_ITEMS: NavItem[] = [
   },
   {
     href: "/schedules",
-    label: "Schedules",
+    labelKey: "schedules",
     roles: ["ADMIN", "MANAGER"],
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -122,7 +121,7 @@ const NAV_ITEMS: NavItem[] = [
   },
   {
     href: "/rooms",
-    label: "Rooms",
+    labelKey: "rooms",
     roles: ["ADMIN", "MANAGER"],
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -132,7 +131,7 @@ const NAV_ITEMS: NavItem[] = [
   },
   {
     href: "/analytics",
-    label: "Analytics",
+    labelKey: "analytics",
     roles: ["ADMIN", "MANAGER"],
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -142,7 +141,7 @@ const NAV_ITEMS: NavItem[] = [
   },
   {
     href: "/reports",
-    label: "Reports",
+    labelKey: "reports",
     roles: ["ADMIN", "MANAGER"],
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -152,7 +151,7 @@ const NAV_ITEMS: NavItem[] = [
   },
   {
     href: "/telegram",
-    label: "Telegram Bot",
+    labelKey: "telegramBot",
     roles: ["ADMIN"],
     icon: (
       <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
@@ -162,7 +161,7 @@ const NAV_ITEMS: NavItem[] = [
   },
   {
     href: "/users",
-    label: "Users",
+    labelKey: "users",
     roles: ["ADMIN"],
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -182,7 +181,14 @@ export default function Sidebar({
   onClose?: () => void;
 }) {
   const pathname = usePathname();
+  const { t } = useTranslation();
   const visibleNav = NAV_ITEMS.filter((item) => item.roles.includes(user.role));
+
+  const ROLE_LABELS_T: Record<string, string> = {
+    ADMIN: t.dashboard.administrator,
+    MANAGER: t.dashboard.manager,
+    TEACHER: t.dashboard.teacher,
+  };
 
   return (
     <aside
@@ -199,7 +205,7 @@ export default function Sidebar({
           </div>
           <div className="min-w-0">
             <p className="text-sm font-semibold leading-tight truncate">O&apos;quv Markaz</p>
-            <p className="text-xs text-gray-400">CRM System</p>
+            <p className="text-xs text-gray-400">{t.nav.crmSystem}</p>
           </div>
         </div>
         <button
@@ -215,11 +221,12 @@ export default function Sidebar({
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-        {visibleNav.map(({ href, label, icon }) => {
+        {visibleNav.map(({ href, labelKey, icon }) => {
+          const label = t.nav[labelKey];
           const isActive = href === "/" ? pathname === "/" : pathname.startsWith(href);
           return (
             <Link
-              key={label}
+              key={labelKey}
               href={href}
               onClick={onClose}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
@@ -249,8 +256,9 @@ export default function Sidebar({
 
         <div className="flex items-center justify-between gap-2">
           <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${ROLE_COLORS[user.role]}`}>
-            {ROLE_LABELS[user.role]}
+            {ROLE_LABELS_T[user.role]}
           </span>
+          <LanguageSwitcher compact />
 
           <form action={logout}>
             <button
@@ -261,7 +269,7 @@ export default function Sidebar({
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 9V5.25A2.25 2.25 0 0 1 10.5 3h6a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 16.5 21h-6a2.25 2.25 0 0 1-2.25-2.25V15m-3 0-3-3m0 0 3-3m-3 3H15" />
               </svg>
-              Sign out
+              {t.nav.signOut}
             </button>
           </form>
         </div>

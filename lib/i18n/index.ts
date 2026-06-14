@@ -1,0 +1,493 @@
+export type Locale = 'uz' | 'ru' | 'en'
+
+export const DEFAULT_LOCALE: Locale = 'uz'
+export const LOCALE_COOKIE = 'crm_locale'
+export const LOCALE_STORAGE_KEY = 'crm_locale'
+export const SUPPORTED_LOCALES: readonly Locale[] = ['uz', 'ru', 'en']
+
+export const DATE_LOCALES: Record<Locale, string> = {
+  uz: 'uz-UZ',
+  ru: 'ru-RU',
+  en: 'en-US',
+}
+
+export const LANGUAGE_LABELS: Record<Locale, string> = {
+  uz: "O'zbekcha",
+  ru: 'Русский',
+  en: 'English',
+}
+
+export const LANGUAGE_FLAGS: Record<Locale, string> = {
+  uz: '🇺🇿',
+  ru: '🇷🇺',
+  en: '🇺🇸',
+}
+
+// ── Translation type ──────────────────────────────────────────────────────────
+
+export type Translations = {
+  common: {
+    save: string
+    saving: string
+    cancel: string
+    edit: string
+    delete: string
+    deleting: string
+    add: string
+    adding: string
+    search: string
+    refresh: string
+    loading: string
+    error: string
+    retry: string
+    close: string
+    active: string
+    inactive: string
+    all: string
+    actions: string
+    status: string
+    date: string
+    viewAll: string
+    saveChanges: string
+    clearSearch: string
+    noData: string
+    student: string
+    students: string
+    records: string
+  }
+  nav: {
+    dashboard: string
+    students: string
+    groups: string
+    myGroups: string
+    attendance: string
+    debtors: string
+    payments: string
+    teachers: string
+    schedules: string
+    rooms: string
+    analytics: string
+    reports: string
+    telegramBot: string
+    users: string
+    signOut: string
+    crmSystem: string
+  }
+  auth: {
+    title: string
+    subtitle: string
+    emailLabel: string
+    emailPlaceholder: string
+    passwordLabel: string
+    signIn: string
+    signingIn: string
+    contactAdmin: string
+    firstTimeSetup: string
+    noAccountsYet: string
+    createAdminAccount: string
+    copyright: string
+  }
+  dashboard: {
+    welcomeBack: string
+    administrator: string
+    manager: string
+    teacher: string
+    overview: string
+    totalStudents: string
+    inAGroup: string
+    totalGroups: string
+    totalTeachers: string
+    todaysClasses: string
+    totalSchedules: string
+    revenueThisMonth: string
+    paymentsThisMonth: string
+    paymentRecords: string
+    todaysAttendance: string
+    notRecordedYet: string
+    present: string
+    absent: string
+    late: string
+    activeStudents: string
+    unassigned: string
+    rooms: string
+    manageRooms: string
+    totalRooms: string
+    activeRooms: string
+    inactive: string
+    analytics: string
+    recentActivity: string
+    latestStudents: string
+    latestPayments: string
+    latestAttendance: string
+    noStudentsYet: string
+    noGroup: string
+    noPaymentsYet: string
+    noAttendanceRecords: string
+    quickActions: string
+    addStudent: string
+    addGroup: string
+    addPayment: string
+    addTeacher: string
+  }
+  students: {
+    title: string
+    subtitle: string
+    addStudent: string
+    fullName: string
+    phone: string
+    createdAt: string
+    searchPlaceholder: string
+    allStudents: string
+    loading: string
+    tryAgain: string
+    noStudents: string
+    editStudent: string
+    deleteStudent: string
+    deleteConfirm: string
+    adding: string
+  }
+  groups: {
+    title: string
+    subtitle: string
+    addGroup: string
+    groupName: string
+    groupNamePlaceholder: string
+    descriptionLabel: string
+    descriptionPlaceholder: string
+    monthlyFee: string
+    feePlaceholder: string
+    studentsCount: string
+    createdAt: string
+    adding: string
+    editGroup: string
+    deleteGroup: string
+    deleteConfirmSuffix: string
+    studentsWillBeUnassigned: string
+    noGroups: string
+    allGroups: string
+    active: string
+    inactive: string
+    allStatuses: string
+    scheduleHint: string
+  }
+  attendance: {
+    title: string
+    subtitle: string
+    markAttendance: string
+    viewHistory: string
+    selectGroup: string
+    groupWithStudents: string
+    selectGroupPrompt: string
+    loadingStudents: string
+    noStudents: string
+    assignStudents: string
+    present: string
+    absent: string
+    late: string
+    saveAttendance: string
+    attendanceSaved: string
+    allGroups: string
+    attendanceRecords: string
+    loadingRecords: string
+    noRecords: string
+    updating: string
+  }
+  payments: {
+    title: string
+    subtitle: string
+    addPayment: string
+    paymentHistory: string
+    recordNewPayment: string
+    selectStudent: string
+    amount: string
+    amountPlaceholder: string
+    paymentDate: string
+    paymentForMonth: string
+    note: string
+    notePlaceholder: string
+    paymentRecorded: string
+    selectStudentPrompt: string
+    allStudents: string
+    allMonths: string
+    paymentRecords: string
+    loadingPayments: string
+    noPayments: string
+    totalPaid: string
+    lastPaid: string
+    monthsPaid: string
+    editPayment: string
+    deletePayment: string
+    deleteConfirm: string
+    optionalNote: string
+  }
+  debtors: {
+    title: string
+    subtitle: string
+    numberOfDebtors: string
+    totalDebtAmount: string
+    allDebtors: string
+    overdue7: string
+    overdue30: string
+    overdueMore7: string
+    overdueMore30: string
+    studentName: string
+    group: string
+    monthlyFee: string
+    amountPaid: string
+    remainingDebt: string
+    daysOverdue: string
+    noDebtors: string
+    noStudentsMatch: string
+    setFeeHint: string
+    filteredTotals: string
+    paid: string
+    remaining: string
+  }
+  teachers: {
+    title: string
+    subtitle: string
+    total: string
+    active: string
+    addTeacher: string
+    fullName: string
+    fullNamePlaceholder: string
+    phone: string
+    subject: string
+    subjectPlaceholder: string
+    salary: string
+    salaryPlaceholder: string
+    adding: string
+    allTeachers: string
+    searchPlaceholder: string
+    loading: string
+    noTeachers: string
+    noTeachersMatch: string
+    joined: string
+    editTeacher: string
+    deleteTeacher: string
+    deleteConfirmSuffix: string
+    statusActive: string
+    statusInactive: string
+  }
+  rooms: {
+    title: string
+    subtitle: string
+    addRoom: string
+    totalRooms: string
+    active: string
+    inactive: string
+    withProjector: string
+    searchPlaceholder: string
+    all: string
+    noRoomsYet: string
+    addFirstRoom: string
+    adjustFilter: string
+    addFirstRoomCta: string
+    capacity: string
+    capacityStudents: string
+    noProjector: string
+    projector: string
+    added: string
+    editRoom: string
+    newRoom: string
+    roomName: string
+    roomNamePlaceholder: string
+    floor: string
+    floorHint: string
+    hasProjector: string
+    projectorDesc: string
+    activeRoom: string
+    activeRoomDesc: string
+    deleteRoom: string
+  }
+  analytics: {
+    title: string
+    subtitle: string
+    overview: string
+    totalStudents: string
+    inAGroup: string
+    activeStudents: string
+    enrolledInGroup: string
+    totalTeachers: string
+    instructors: string
+    totalGroups: string
+    classGroups: string
+    monthlyRevenue: string
+    totalRevenue: string
+    attendanceRate: string
+    enrollmentTrend: string
+    revenueBreakdown: string
+    topGroups: string
+    subjectBreakdown: string
+  }
+  reports: {
+    title: string
+    subtitle: string
+    pdfReports: string
+    pdfSubtitle: string
+    excelReports: string
+    excelSubtitle: string
+    download: string
+    downloading: string
+    downloaded: string
+    studentsReport: string
+    studentsReportDesc: string
+    teachersReport: string
+    teachersReportDesc: string
+    groupsReport: string
+    groupsReportDesc: string
+    paymentsReport: string
+    paymentsReportDesc: string
+    attendanceReport: string
+    attendanceReportDesc: string
+    debtorsReport: string
+    debtorsReportDesc: string
+    liveData: string
+    liveDataDesc: string
+    generatedOnDemand: string
+  }
+  telegram: {
+    title: string
+    subtitle: string
+    botConfiguration: string
+    settingsSaved: string
+    enableNotifications: string
+    enableDesc: string
+    botToken: string
+    botTokenHint: string
+    chatId: string
+    chatIdHint: string
+    chatIdPlaceholder: string
+    tokenSaved: string
+    saveSettings: string
+    saving: string
+    saved: string
+    saveFailed: string
+    testConnection: string
+    testDesc: string
+    connectionSuccess: string
+    botSentMessage: string
+    connectionFailed: string
+    testTelegram: string
+    testing: string
+    sendDailyReport: string
+    sending: string
+    sent: string
+    sendFailed: string
+    reportSent: string
+    dailyReportDesc: string
+    sendNow: string
+    eventNotifications: string
+    eventNotificationsDesc: string
+    eventNewStudent: string
+    eventNewStudentDesc: string
+    eventNewPayment: string
+    eventNewPaymentDesc: string
+    eventNewTeacher: string
+    eventNewTeacherDesc: string
+    eventNewGroup: string
+    eventNewGroupDesc: string
+    eventEnabled: string
+    setupGuide: string
+    setupStep1: string
+    setupStep2: string
+    setupStep3: string
+    setupStep4: string
+    setupStep5: string
+    setupStep6: string
+  }
+  users: {
+    title: string
+    subtitle: string
+    total: string
+    active: string
+    createUser: string
+    allUsers: string
+    searchPlaceholder: string
+    loading: string
+    noUsers: string
+    noUsersMatch: string
+    userColumn: string
+    roleColumn: string
+    teacherProfile: string
+    statusColumn: string
+    joined: string
+    statusActive: string
+    statusInactive: string
+    editUser: string
+    deleteUser: string
+    resetPassword: string
+    activate: string
+    deactivate: string
+    roleAdmin: string
+    roleManager: string
+    roleTeacher: string
+    fullName: string
+    fullNamePlaceholder: string
+    emailPlaceholder: string
+    tempPassword: string
+    minChars: string
+    subjectPlaceholder: string
+    salaryLabel: string
+    salaryPlaceholder: string
+    teacherNote: string
+    accountActive: string
+    newPassword: string
+    deleteConfirm: string
+    linkedTeacherNote: string
+    creating: string
+  }
+  teacherDashboard: {
+    overview: string
+    myGroups: string
+    assignedGroups: string
+    myStudents: string
+    acrossAllGroups: string
+    todaysAttendance: string
+    notRecordedYet: string
+    myGroupsList: string
+    viewAll: string
+    noGroupsAssigned: string
+    students: string
+    noClassToday: string
+    todaysAttendanceSection: string
+    recordLink: string
+    noAttendanceToday: string
+    recordNow: string
+    mySchedule: string
+    day: string
+    group: string
+    time: string
+    room: string
+    today: string
+    quickActions: string
+    recordAttendance: string
+    viewMyGroups: string
+  }
+}
+
+// ── Utility functions ─────────────────────────────────────────────────────────
+
+import uz from './translations/uz'
+import ru from './translations/ru'
+import en from './translations/en'
+
+const translationMap: Record<Locale, Translations> = { uz, ru, en }
+
+export function getTranslations(locale: Locale): Translations {
+  return translationMap[locale] ?? translationMap[DEFAULT_LOCALE]
+}
+
+export async function getServerTranslations(): Promise<{
+  t: Translations
+  locale: Locale
+  dateLocale: string
+}> {
+  const { cookies } = await import('next/headers')
+  const cookieStore = await cookies()
+  const raw = cookieStore.get(LOCALE_COOKIE)?.value ?? DEFAULT_LOCALE
+  const locale: Locale = (SUPPORTED_LOCALES as readonly string[]).includes(raw)
+    ? (raw as Locale)
+    : DEFAULT_LOCALE
+  return { t: getTranslations(locale), locale, dateLocale: DATE_LOCALES[locale] }
+}

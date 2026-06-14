@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 
 type Student = {
   id: string;
@@ -10,6 +11,7 @@ type Student = {
 };
 
 export default function StudentsPage() {
+  const { t, dateLocale } = useTranslation();
   // ── list ─────────────────────────────────────────────────────────────
   const [students, setStudents] = useState<Student[]>([]);
   const [listLoading, setListLoading] = useState(true);
@@ -155,21 +157,19 @@ export default function StudentsPage() {
 
           {/* Header */}
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Students</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              Manage your learning center students
-            </p>
+            <h1 className="text-3xl font-bold text-gray-900">{t.students.title}</h1>
+            <p className="mt-1 text-sm text-gray-500">{t.students.subtitle}</p>
           </div>
 
           {/* Add Student */}
           <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-800 mb-5">Add Student</h2>
+            <h2 className="text-lg font-semibold text-gray-800 mb-5">{t.students.addStudent}</h2>
             <form onSubmit={handleAdd} className="flex flex-col sm:flex-row gap-3">
               <input
                 type="text"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                placeholder="Full Name"
+                placeholder={t.students.fullName}
                 required
                 disabled={addSubmitting}
                 className={inputCls}
@@ -178,7 +178,7 @@ export default function StudentsPage() {
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                placeholder="Phone"
+                placeholder={t.students.phone}
                 required
                 disabled={addSubmitting}
                 className={inputCls}
@@ -188,7 +188,7 @@ export default function StudentsPage() {
                 disabled={addSubmitting || !fullName.trim() || !phone.trim()}
                 className={primaryBtnCls}
               >
-                {addSubmitting ? "Adding…" : "Add Student"}
+                {addSubmitting ? t.students.adding : t.students.addStudent}
               </button>
             </form>
             {addError && <ErrorPill>{addError}</ErrorPill>}
@@ -198,7 +198,7 @@ export default function StudentsPage() {
           <section className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
               <h2 className="text-lg font-semibold text-gray-800">
-                All Students
+                {t.students.allStudents}
                 {!listLoading && (
                   <span className="ml-2 text-sm font-normal text-gray-400">
                     ({students.length})
@@ -210,14 +210,14 @@ export default function StudentsPage() {
                   onClick={fetchStudents}
                   className="text-sm text-gray-400 hover:text-gray-700 transition-colors"
                 >
-                  ↻ Refresh
+                  ↻ {t.common.refresh}
                 </button>
               )}
             </div>
 
             {listLoading ? (
               <div className="flex items-center justify-center gap-2 py-20 text-gray-400 text-sm">
-                <Spinner /> Loading students…
+                <Spinner /> {t.students.loading}
               </div>
             ) : listError ? (
               <div className="py-16 text-center">
@@ -226,23 +226,23 @@ export default function StudentsPage() {
                   onClick={fetchStudents}
                   className="mt-3 text-sm text-blue-600 hover:underline"
                 >
-                  Try again
+                  {t.students.tryAgain}
                 </button>
               </div>
             ) : students.length === 0 ? (
               <div className="py-20 text-center text-gray-400 text-sm">
-                No students yet. Use the form above to add one.
+                {t.students.noStudents}
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="bg-gray-50 border-b border-gray-100">
-                      <Th>Full Name</Th>
-                      <Th>Phone</Th>
-                      <Th>Created At</Th>
+                      <Th>{t.students.fullName}</Th>
+                      <Th>{t.students.phone}</Th>
+                      <Th>{t.students.createdAt}</Th>
                       <Th>
-                        <span className="sr-only">Actions</span>
+                        <span className="sr-only">{t.common.actions}</span>
                       </Th>
                     </tr>
                   </thead>
@@ -262,7 +262,7 @@ export default function StudentsPage() {
                             {student.phone}
                           </td>
                           <td className="px-6 py-4 text-gray-400">
-                            {formatDate(student.createdAt)}
+                            {formatDate(student.createdAt, dateLocale)}
                           </td>
                           <td className="px-6 py-4">
                             <div className="flex items-center justify-end gap-2">
@@ -275,14 +275,14 @@ export default function StudentsPage() {
                                     disabled={isRowBusy}
                                     className="rounded-md px-3 py-1.5 text-xs font-medium text-blue-600 border border-blue-200 hover:bg-blue-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                                   >
-                                    Edit
+                                    {t.common.edit}
                                   </button>
                                   <button
                                     onClick={() => setDeleteConfirmId(student.id)}
                                     disabled={isRowBusy}
                                     className="rounded-md px-3 py-1.5 text-xs font-medium text-red-600 border border-red-200 hover:bg-red-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                                   >
-                                    Delete
+                                    {t.common.delete}
                                   </button>
                                 </>
                               )}
@@ -303,10 +303,10 @@ export default function StudentsPage() {
       {editingStudent && (
         <Backdrop onClick={closeEdit}>
           <ModalCard onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-lg font-semibold text-gray-900 mb-6">Edit Student</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-6">{t.students.editStudent}</h2>
             <form onSubmit={handleEdit} className="space-y-4">
               <div>
-                <label className={labelCls}>Full Name</label>
+                <label className={labelCls}>{t.students.fullName}</label>
                 <input
                   type="text"
                   value={editFullName}
@@ -317,7 +317,7 @@ export default function StudentsPage() {
                 />
               </div>
               <div>
-                <label className={labelCls}>Phone</label>
+                <label className={labelCls}>{t.students.phone}</label>
                 <input
                   type="tel"
                   value={editPhone}
@@ -335,7 +335,7 @@ export default function StudentsPage() {
                   disabled={editSubmitting}
                   className={ghostBtnCls}
                 >
-                  Cancel
+                  {t.common.cancel}
                 </button>
                 <button
                   type="submit"
@@ -348,10 +348,10 @@ export default function StudentsPage() {
                 >
                   {editSubmitting ? (
                     <span className="flex items-center gap-2">
-                      <Spinner /> Saving…
+                      <Spinner /> {t.common.saving}
                     </span>
                   ) : (
-                    "Save Changes"
+                    t.common.saveChanges
                   )}
                 </button>
               </div>
@@ -382,13 +382,13 @@ export default function StudentsPage() {
               </div>
               <div>
                 <h2 className="text-lg font-semibold text-gray-900">
-                  Delete student?
+                  {t.students.deleteStudent}
                 </h2>
                 <p className="mt-1 text-sm text-gray-500">
                   <span className="font-medium text-gray-700">
                     {studentToDelete.fullName}
                   </span>{" "}
-                  will be permanently removed. This cannot be undone.
+                  {t.students.deleteConfirm}
                 </p>
               </div>
               <div className="flex gap-3 w-full">
@@ -396,13 +396,13 @@ export default function StudentsPage() {
                   onClick={() => setDeleteConfirmId(null)}
                   className={`${ghostBtnCls} flex-1`}
                 >
-                  Cancel
+                  {t.common.cancel}
                 </button>
                 <button
                   onClick={() => handleDelete(deleteConfirmId)}
                   className="flex-1 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700 active:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors"
                 >
-                  Delete
+                  {t.common.delete}
                 </button>
               </div>
             </div>
@@ -503,8 +503,8 @@ function Spinner({ className = "" }: { className?: string }) {
   );
 }
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleString("en-US", {
+function formatDate(iso: string, locale: string) {
+  return new Date(iso).toLocaleString(locale, {
     year: "numeric",
     month: "short",
     day: "numeric",

@@ -3,20 +3,11 @@ import { getSession } from "@/lib/dal";
 import Link from "next/link";
 import { DashboardCharts, type MonthStudentPoint, type MonthRevenuePoint, type AttendancePoint } from "@/app/components/DashboardCharts";
 import TeacherDashboard from "@/app/components/TeacherDashboard";
-
-function fmt(n: number) {
-  return new Intl.NumberFormat("en-US").format(Math.round(n));
-}
+import { getServerTranslations } from "@/lib/i18n";
 
 async function safe<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
   try { return await fn(); } catch { return fallback; }
 }
-
-const ROLE_LABELS: Record<string, string> = {
-  ADMIN: "Administrator",
-  MANAGER: "Manager",
-  TEACHER: "Teacher",
-};
 
 const ROLE_COLORS: Record<string, string> = {
   ADMIN: "bg-violet-100 text-violet-700 border-violet-200",
@@ -36,10 +27,25 @@ function dateKey(d: Date) {
 
 export default async function DashboardPage() {
   const session = await getSession();
+  const { t, dateLocale } = await getServerTranslations();
+
+  const fmt = (n: number) => new Intl.NumberFormat(dateLocale).format(Math.round(n));
 
   if (session?.role === "TEACHER") {
     return <TeacherDashboard session={session} />;
   }
+
+  const ROLE_LABELS: Record<string, string> = {
+    ADMIN: t.dashboard.administrator,
+    MANAGER: t.dashboard.manager,
+    TEACHER: t.dashboard.teacher,
+  };
+
+  const STATUS_LABELS: Record<string, string> = {
+    PRESENT: t.dashboard.present,
+    ABSENT: t.dashboard.absent,
+    LATE: t.dashboard.late,
+  };
 
   const now = new Date();
   const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
@@ -199,7 +205,7 @@ export default async function DashboardPage() {
   for (let i = 5; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     months.push({
-      label: d.toLocaleDateString("en-US", { month: "short", year: "2-digit" }),
+      label: d.toLocaleDateString(dateLocale, { month: "short", year: "2-digit" }),
       month: d.getMonth() + 1,
       year: d.getFullYear(),
     });
@@ -228,7 +234,7 @@ export default async function DashboardPage() {
     const key = dateKey(d);
     const dayRecs = attendanceLast7Days.filter((a) => dateKey(new Date(a.date)) === key);
     attendanceTrend.push({
-      date: d.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+      date: d.toLocaleDateString(dateLocale, { month: "short", day: "numeric" }),
       present: dayRecs.filter((a) => a.status === "PRESENT").length,
       absent: dayRecs.filter((a) => a.status === "ABSENT").length,
       late: dayRecs.filter((a) => a.status === "LATE").length,
@@ -238,9 +244,9 @@ export default async function DashboardPage() {
   // ── KPI card definitions ─────────────────────────────────────────────────
   const kpiCards = [
     {
-      label: "Total Students",
+      label: t.dashboard.totalStudents,
       value: studentCount,
-      sub: `${activeStudentCount} in a group`,
+      sub: `${activeStudentCount} ${t.dashboard.inAGroup}`,
       icon: (
         <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
@@ -251,9 +257,9 @@ export default async function DashboardPage() {
       accent: "border-l-blue-500",
     },
     {
-      label: "Total Groups",
+      label: t.dashboard.totalGroups,
       value: groupCount,
-      sub: `${activeGroupCount} active`,
+      sub: `${activeGroupCount} ${t.common.active}`,
       icon: (
         <svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v8.25A2.25 2.25 0 0 0 4.5 16.5h15a2.25 2.25 0 0 0 2.25-2.25V8.25A2.25 2.25 0 0 0 19.5 6h-5.69a1.5 1.5 0 0 1-1.06-.44Z" />
@@ -264,9 +270,9 @@ export default async function DashboardPage() {
       accent: "border-l-emerald-500",
     },
     {
-      label: "Total Teachers",
+      label: t.dashboard.totalTeachers,
       value: teacherCount,
-      sub: `${activeTeacherCount} active`,
+      sub: `${activeTeacherCount} ${t.common.active}`,
       icon: (
         <svg className="w-5 h-5 text-violet-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.627 48.627 0 0 1 12 20.904a48.627 48.627 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.57 50.57 0 0 0-2.658-.813A59.905 59.905 0 0 1 12 3.493a59.902 59.902 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0 1 12 13.489a50.702 50.702 0 0 1 3.741-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5" />
@@ -277,9 +283,9 @@ export default async function DashboardPage() {
       accent: "border-l-violet-500",
     },
     {
-      label: "Today's Classes",
+      label: t.dashboard.todaysClasses,
       value: todayClassCount,
-      sub: `${totalSchedules} total schedules`,
+      sub: `${totalSchedules} ${t.dashboard.totalSchedules}`,
       icon: (
         <svg className="w-5 h-5 text-sky-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
@@ -290,9 +296,9 @@ export default async function DashboardPage() {
       accent: "border-l-sky-500",
     },
     {
-      label: "Revenue This Month",
+      label: t.dashboard.revenueThisMonth,
       value: `${fmt(monthRevenue)} UZS`,
-      sub: now.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+      sub: now.toLocaleDateString(dateLocale, { month: "long", year: "numeric" }),
       icon: (
         <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
@@ -303,9 +309,9 @@ export default async function DashboardPage() {
       accent: "border-l-green-500",
     },
     {
-      label: "Payments This Month",
+      label: t.dashboard.paymentsThisMonth,
       value: paymentsThisMonthCount,
-      sub: "Payment records",
+      sub: t.dashboard.paymentRecords,
       icon: (
         <svg className="w-5 h-5 text-teal-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z" />
@@ -316,12 +322,12 @@ export default async function DashboardPage() {
       accent: "border-l-teal-500",
     },
     {
-      label: "Today's Attendance",
+      label: t.dashboard.todaysAttendance,
       value: attendanceToday > 0 ? `${attendancePct}%` : "—",
       sub:
         attendanceToday > 0
-          ? `${presentToday} present · ${absentToday} absent · ${lateToday} late`
-          : "Not recorded yet",
+          ? `${presentToday} ${t.dashboard.present} · ${absentToday} ${t.dashboard.absent} · ${lateToday} ${t.dashboard.late}`
+          : t.dashboard.notRecordedYet,
       icon: (
         <svg className="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
@@ -332,9 +338,9 @@ export default async function DashboardPage() {
       accent: "border-l-amber-500",
     },
     {
-      label: "Active Students",
+      label: t.dashboard.activeStudents,
       value: activeStudentCount,
-      sub: `${studentCount - activeStudentCount} unassigned`,
+      sub: `${studentCount - activeStudentCount} ${t.dashboard.unassigned}`,
       icon: (
         <svg className="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
@@ -354,10 +360,10 @@ export default async function DashboardPage() {
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
-              Welcome back, {session?.fullName ?? "User"}
+              {t.dashboard.welcomeBack}, {session?.fullName ?? "User"}
             </h1>
             <p className="mt-1 text-sm text-gray-500">
-              {now.toLocaleDateString("en-US", {
+              {now.toLocaleDateString(dateLocale, {
                 weekday: "long",
                 year: "numeric",
                 month: "long",
@@ -379,7 +385,7 @@ export default async function DashboardPage() {
         {/* ── KPI Cards ─────────────────────────────────────────────────── */}
         <section>
           <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">
-            Overview
+            {t.dashboard.overview}
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {kpiCards.map(({ label, value, sub, icon, iconBg, href, accent }) => (
@@ -410,8 +416,8 @@ export default async function DashboardPage() {
         {/* ── Rooms ─────────────────────────────────────────────────────── */}
         <section>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest">Rooms</h2>
-            <Link href="/rooms" className="text-xs text-blue-600 hover:underline font-medium">Manage rooms →</Link>
+            <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest">{t.dashboard.rooms}</h2>
+            <Link href="/rooms" className="text-xs text-blue-600 hover:underline font-medium">{t.dashboard.manageRooms}</Link>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Link href="/rooms" className="bg-white rounded-2xl border border-gray-200 border-l-4 border-l-blue-500 p-5 flex items-start gap-4 shadow-sm hover:shadow-md transition-all">
@@ -421,9 +427,9 @@ export default async function DashboardPage() {
                 </svg>
               </div>
               <div>
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide leading-none">Total Rooms</p>
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide leading-none">{t.dashboard.totalRooms}</p>
                 <p className="text-2xl font-bold text-gray-900 mt-1.5 leading-none">{totalRooms}</p>
-                <p className="text-xs text-gray-400 mt-1.5">{activeRooms} active</p>
+                <p className="text-xs text-gray-400 mt-1.5">{activeRooms} {t.dashboard.activeRooms}</p>
               </div>
             </Link>
             <Link href="/rooms?filter=active" className="bg-white rounded-2xl border border-gray-200 border-l-4 border-l-emerald-500 p-5 flex items-start gap-4 shadow-sm hover:shadow-md transition-all">
@@ -433,9 +439,9 @@ export default async function DashboardPage() {
                 </svg>
               </div>
               <div>
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide leading-none">Active Rooms</p>
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide leading-none">{t.dashboard.activeRooms}</p>
                 <p className="text-2xl font-bold text-gray-900 mt-1.5 leading-none">{activeRooms}</p>
-                <p className="text-xs text-gray-400 mt-1.5">{totalRooms - activeRooms} inactive</p>
+                <p className="text-xs text-gray-400 mt-1.5">{totalRooms - activeRooms} {t.dashboard.inactive}</p>
               </div>
             </Link>
           </div>
@@ -444,7 +450,7 @@ export default async function DashboardPage() {
         {/* ── Charts ────────────────────────────────────────────────────── */}
         <section>
           <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">
-            Analytics
+            {t.dashboard.analytics}
           </h2>
           <DashboardCharts
             studentGrowth={studentGrowth}
@@ -456,21 +462,21 @@ export default async function DashboardPage() {
         {/* ── Recent Activity ───────────────────────────────────────────── */}
         <section>
           <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">
-            Recent Activity
+            {t.dashboard.recentActivity}
           </h2>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
             {/* Recent Students */}
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
               <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-                <h3 className="text-sm font-semibold text-gray-700">Latest Students</h3>
+                <h3 className="text-sm font-semibold text-gray-700">{t.dashboard.latestStudents}</h3>
                 <Link href="/students" className="text-xs text-blue-600 hover:underline font-medium">
-                  View all
+                  {t.common.viewAll}
                 </Link>
               </div>
               {recentStudents.length === 0 ? (
                 <div className="px-5 py-8 text-center text-sm text-gray-400">
-                  No students yet
+                  {t.dashboard.noStudentsYet}
                 </div>
               ) : (
                 <ul className="divide-y divide-gray-50">
@@ -482,11 +488,11 @@ export default async function DashboardPage() {
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium text-gray-900 truncate">{s.fullName}</p>
                         <p className="text-xs text-gray-400 truncate">
-                          {s.group?.name ?? "No group"} · {s.phone}
+                          {s.group?.name ?? t.dashboard.noGroup} · {s.phone}
                         </p>
                       </div>
                       <time className="text-xs text-gray-400 flex-shrink-0">
-                        {new Date(s.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                        {new Date(s.createdAt).toLocaleDateString(dateLocale, { month: "short", day: "numeric" })}
                       </time>
                     </li>
                   ))}
@@ -497,14 +503,14 @@ export default async function DashboardPage() {
             {/* Recent Payments */}
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
               <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-                <h3 className="text-sm font-semibold text-gray-700">Latest Payments</h3>
+                <h3 className="text-sm font-semibold text-gray-700">{t.dashboard.latestPayments}</h3>
                 <Link href="/payments" className="text-xs text-blue-600 hover:underline font-medium">
-                  View all
+                  {t.common.viewAll}
                 </Link>
               </div>
               {recentPayments.length === 0 ? (
                 <div className="px-5 py-8 text-center text-sm text-gray-400">
-                  No payments yet
+                  {t.dashboard.noPaymentsYet}
                 </div>
               ) : (
                 <ul className="divide-y divide-gray-50">
@@ -518,7 +524,7 @@ export default async function DashboardPage() {
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium text-gray-900 truncate">{p.student.fullName}</p>
                         <p className="text-xs text-gray-400">
-                          {new Date(0, p.month - 1).toLocaleString("en-US", { month: "long" })} {p.year}
+                          {new Date(0, p.month - 1).toLocaleString(dateLocale, { month: "long" })} {p.year}
                         </p>
                       </div>
                       <span className="text-sm font-semibold text-emerald-700 flex-shrink-0">
@@ -533,14 +539,14 @@ export default async function DashboardPage() {
             {/* Recent Attendance */}
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
               <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-                <h3 className="text-sm font-semibold text-gray-700">Latest Attendance</h3>
+                <h3 className="text-sm font-semibold text-gray-700">{t.dashboard.latestAttendance}</h3>
                 <Link href="/attendance" className="text-xs text-blue-600 hover:underline font-medium">
-                  View all
+                  {t.common.viewAll}
                 </Link>
               </div>
               {recentAttendance.length === 0 ? (
                 <div className="px-5 py-8 text-center text-sm text-gray-400">
-                  No attendance records yet
+                  {t.dashboard.noAttendanceRecords}
                 </div>
               ) : (
                 <ul className="divide-y divide-gray-50">
@@ -555,10 +561,10 @@ export default async function DashboardPage() {
                       </div>
                       <div className="flex flex-col items-end gap-1 flex-shrink-0">
                         <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${STATUS_STYLES[a.status]}`}>
-                          {a.status.charAt(0) + a.status.slice(1).toLowerCase()}
+                          {STATUS_LABELS[a.status]}
                         </span>
                         <time className="text-xs text-gray-400">
-                          {new Date(a.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                          {new Date(a.date).toLocaleDateString(dateLocale, { month: "short", day: "numeric" })}
                         </time>
                       </div>
                     </li>
@@ -572,13 +578,13 @@ export default async function DashboardPage() {
         {/* ── Quick Actions ─────────────────────────────────────────────── */}
         <section>
           <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">
-            Quick Actions
+            {t.dashboard.quickActions}
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
               {
                 href: "/students",
-                label: "Add Student",
+                label: t.dashboard.addStudent,
                 icon: (
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.765Z" />
@@ -588,7 +594,7 @@ export default async function DashboardPage() {
               },
               {
                 href: "/groups",
-                label: "Add Group",
+                label: t.dashboard.addGroup,
                 icon: (
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 10.5v6m3-3H9m4.06-7.19-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" />
@@ -598,7 +604,7 @@ export default async function DashboardPage() {
               },
               {
                 href: "/payments",
-                label: "Add Payment",
+                label: t.dashboard.addPayment,
                 icon: (
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z" />
@@ -608,7 +614,7 @@ export default async function DashboardPage() {
               },
               {
                 href: "/teachers",
-                label: "Add Teacher",
+                label: t.dashboard.addTeacher,
                 icon: (
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.627 48.627 0 0 1 12 20.904a48.627 48.627 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.57 50.57 0 0 0-2.658-.813A59.905 59.905 0 0 1 12 3.493a59.902 59.902 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0 1 12 13.489a50.702 50.702 0 0 1 3.741-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5" />

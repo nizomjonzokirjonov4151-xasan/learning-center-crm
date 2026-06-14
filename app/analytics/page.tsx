@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 import {
   BarChart, Bar,
   AreaChart, Area,
@@ -45,8 +46,8 @@ function fmt(n: number) {
   return String(Math.round(n));
 }
 
-function fmtFull(n: number) {
-  return new Intl.NumberFormat("en-US").format(Math.round(n));
+function fmtFull(n: number, locale = "en-US") {
+  return new Intl.NumberFormat(locale).format(Math.round(n));
 }
 
 // ── Skeleton ──────────────────────────────────────────────────────────────────
@@ -155,6 +156,7 @@ function KpiCard({
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function AnalyticsPage() {
+  const { t, dateLocale } = useTranslation();
   const [students, setStudents] = useState<StudentData | null>(null);
   const [revenue, setRevenue] = useState<RevenueData | null>(null);
   const [attendance, setAttendance] = useState<AttendanceData | null>(null);
@@ -209,16 +211,14 @@ export default function AnalyticsPage() {
         {/* ── Header ──────────────────────────────────────────────────────── */}
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Analytics</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              Performance overview for your learning center
-            </p>
+            <h1 className="text-2xl font-bold text-gray-900">{t.analytics.title}</h1>
+            <p className="mt-1 text-sm text-gray-500">{t.analytics.subtitle}</p>
           </div>
           <div className="flex items-center gap-2 text-sm text-gray-500 bg-white border border-gray-200 rounded-xl px-4 py-2 shadow-sm">
             <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
             </svg>
-            {now.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+            {now.toLocaleDateString(dateLocale, { month: "long", year: "numeric" })}
           </div>
         </div>
 
@@ -233,7 +233,7 @@ export default function AnalyticsPage() {
               className="ml-auto text-xs font-semibold underline hover:no-underline"
               onClick={() => window.location.reload()}
             >
-              Retry
+              {t.common.retry}
             </button>
           </div>
         )}
@@ -241,13 +241,13 @@ export default function AnalyticsPage() {
         {/* ── KPI Cards ───────────────────────────────────────────────────── */}
         <section>
           <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">
-            Overview
+            {t.analytics.overview}
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             <KpiCard
-              label="Total Students"
+              label={t.analytics.totalStudents}
               value={students?.total ?? 0}
-              sub={`${students?.active ?? 0} in a group`}
+              sub={`${students?.active ?? 0} ${t.analytics.inAGroup}`}
               loading={loading}
               accent="border-l-blue-500"
               icon={
@@ -257,9 +257,9 @@ export default function AnalyticsPage() {
               }
             />
             <KpiCard
-              label="Active Students"
+              label={t.analytics.activeStudents}
               value={students?.active ?? 0}
-              sub="Enrolled in a group"
+              sub={t.analytics.enrolledInGroup}
               loading={loading}
               accent="border-l-indigo-500"
               icon={
@@ -269,9 +269,9 @@ export default function AnalyticsPage() {
               }
             />
             <KpiCard
-              label="Total Teachers"
+              label={t.analytics.totalTeachers}
               value={students?.totalTeachers ?? 0}
-              sub="Instructors"
+              sub={t.analytics.instructors}
               loading={loading}
               accent="border-l-violet-500"
               icon={
@@ -281,9 +281,9 @@ export default function AnalyticsPage() {
               }
             />
             <KpiCard
-              label="Total Groups"
+              label={t.analytics.totalGroups}
               value={students?.totalGroups ?? 0}
-              sub="Class groups"
+              sub={t.analytics.classGroups}
               loading={loading}
               accent="border-l-emerald-500"
               icon={
@@ -293,9 +293,9 @@ export default function AnalyticsPage() {
               }
             />
             <KpiCard
-              label="Monthly Revenue"
+              label={t.analytics.monthlyRevenue}
               value={revenue ? `${fmt(revenue.thisMonthRevenue)} UZS` : "—"}
-              sub={revenue ? `${fmtFull(revenue.totalRevenue)} UZS total` : undefined}
+              sub={revenue ? `${fmtFull(revenue.totalRevenue, dateLocale)} UZS ${t.analytics.totalRevenue}` : undefined}
               loading={loading}
               accent="border-l-green-500"
               icon={
@@ -559,23 +559,23 @@ export default function AnalyticsPage() {
         {!loading && revenue && (
           <section>
             <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">
-              Revenue Summary
+              {t.analytics.revenueBreakdown}
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {[
                 {
-                  label: "All-Time Revenue",
-                  value: `${fmtFull(revenue.totalRevenue)} UZS`,
-                  sub: `${revenue.paymentCount} total payments`,
+                  label: t.analytics.totalRevenue,
+                  value: `${fmtFull(revenue.totalRevenue, dateLocale)} UZS`,
+                  sub: `${revenue.paymentCount} ${t.dashboard.paymentRecords}`,
                   icon: "💰",
                   bg: "bg-green-50",
                   border: "border-green-200",
                   text: "text-green-900",
                 },
                 {
-                  label: "This Month",
-                  value: `${fmtFull(revenue.thisMonthRevenue)} UZS`,
-                  sub: now.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+                  label: t.analytics.monthlyRevenue,
+                  value: `${fmtFull(revenue.thisMonthRevenue, dateLocale)} UZS`,
+                  sub: now.toLocaleDateString(dateLocale, { month: "long", year: "numeric" }),
                   icon: "📅",
                   bg: "bg-blue-50",
                   border: "border-blue-200",

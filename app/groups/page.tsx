@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 
 type Group = {
   id: string;
@@ -81,23 +82,24 @@ function ModalCard({ children, onClick }: { children: React.ReactNode; onClick?:
   );
 }
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-GB", {
+function formatDate(iso: string, locale: string) {
+  return new Date(iso).toLocaleDateString(locale, {
     day: "2-digit",
     month: "short",
     year: "numeric",
   });
 }
 
-function StudentBadge({ count }: { count: number }) {
+function StudentBadge({ count, label }: { count: number; label: string }) {
   return (
     <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700 border border-blue-100">
-      {count} {count === 1 ? "student" : "students"}
+      {count} {label}
     </span>
   );
 }
 
 export default function GroupsPage() {
+  const { t, dateLocale } = useTranslation();
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -238,26 +240,24 @@ export default function GroupsPage() {
       <div className="min-h-screen bg-gray-50 py-6 px-4 sm:py-10 sm:px-8">
         <div className="max-w-5xl mx-auto space-y-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Groups</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              Organize your students into learning groups.
-            </p>
+            <h1 className="text-2xl font-bold text-gray-900">{t.groups.title}</h1>
+            <p className="mt-1 text-sm text-gray-500">{t.groups.subtitle}</p>
           </div>
 
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
             <h2 className="text-base font-semibold text-gray-900 mb-4">
-              Add New Group
+              {t.groups.addGroup}
             </h2>
             <form onSubmit={handleAdd} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label htmlFor="name" className={labelCls}>
-                    Group Name <span className="text-red-500">*</span>
+                    {t.groups.groupName} <span className="text-red-500">*</span>
                   </label>
                   <input
                     id="name"
                     type="text"
-                    placeholder="e.g. Morning English A1"
+                    placeholder={t.groups.groupNamePlaceholder}
                     value={newName}
                     onChange={(e) => setNewName(e.target.value)}
                     required
@@ -266,13 +266,12 @@ export default function GroupsPage() {
                 </div>
                 <div>
                   <label htmlFor="description" className={labelCls}>
-                    Description{" "}
-                    <span className="text-gray-400 font-normal">(optional)</span>
+                    {t.groups.descriptionLabel}
                   </label>
                   <input
                     id="description"
                     type="text"
-                    placeholder="e.g. Weekdays 09:00–11:00"
+                    placeholder={t.groups.descriptionPlaceholder}
                     value={newDescription}
                     onChange={(e) => setNewDescription(e.target.value)}
                     className={inputCls}
@@ -280,15 +279,14 @@ export default function GroupsPage() {
                 </div>
                 <div>
                   <label htmlFor="monthlyFee" className={labelCls}>
-                    Monthly Fee (UZS){" "}
-                    <span className="text-gray-400 font-normal">(optional)</span>
+                    {t.groups.monthlyFee}
                   </label>
                   <input
                     id="monthlyFee"
                     type="number"
                     min="0"
                     step="1000"
-                    placeholder="e.g. 500000"
+                    placeholder={t.groups.feePlaceholder}
                     value={newMonthlyFee}
                     onChange={(e) => setNewMonthlyFee(e.target.value)}
                     className={inputCls}
@@ -299,7 +297,7 @@ export default function GroupsPage() {
               <div className="flex justify-end">
                 <button type="submit" disabled={adding} className={primaryBtnCls}>
                   {adding && <Spinner />}
-                  {adding ? "Adding…" : "Add Group"}
+                  {adding ? t.groups.adding : t.groups.addGroup}
                 </button>
               </div>
             </form>
@@ -307,9 +305,9 @@ export default function GroupsPage() {
 
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-              <h2 className="text-base font-semibold text-gray-900">All Groups</h2>
+              <h2 className="text-base font-semibold text-gray-900">{t.groups.allGroups}</h2>
               <span className="text-sm text-gray-400">
-                {!loading && `${groups.length} group${groups.length !== 1 ? "s" : ""}`}
+                {!loading && groups.length}
               </span>
             </div>
 
@@ -322,26 +320,26 @@ export default function GroupsPage() {
             {loading ? (
               <div className="flex items-center justify-center py-16 text-gray-400 gap-2">
                 <Spinner />
-                <span className="text-sm">Loading groups…</span>
+                <span className="text-sm">{t.common.loading}</span>
               </div>
             ) : groups.length === 0 && !error ? (
               <div className="flex flex-col items-center justify-center py-16 text-gray-400">
                 <svg className="w-10 h-10 mb-3 text-gray-300" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v8.25A2.25 2.25 0 0 0 4.5 16.5h15a2.25 2.25 0 0 0 2.25-2.25V8.25A2.25 2.25 0 0 0 19.5 6h-5.69a1.5 1.5 0 0 1-1.06-.44Z" />
                 </svg>
-                <p className="text-sm">No groups yet. Add your first group above.</p>
+                <p className="text-sm">{t.groups.noGroups}</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50 border-b border-gray-100">
                     <tr>
-                      <Th>Group Name</Th>
-                      <Th>Description</Th>
-                      <Th>Monthly Fee</Th>
-                      <Th>Students</Th>
-                      <Th>Created</Th>
-                      <Th>Actions</Th>
+                      <Th>{t.groups.groupName}</Th>
+                      <Th>{t.groups.descriptionLabel}</Th>
+                      <Th>{t.groups.monthlyFee}</Th>
+                      <Th>{t.groups.studentsCount}</Th>
+                      <Th>{t.groups.createdAt}</Th>
+                      <Th>{t.common.actions}</Th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
@@ -358,22 +356,22 @@ export default function GroupsPage() {
                         <td className="px-4 py-3 text-gray-700 whitespace-nowrap">
                           {group.monthlyFee > 0 ? (
                             <span className="font-medium">
-                              {new Intl.NumberFormat("en-US").format(group.monthlyFee)} UZS
+                              {new Intl.NumberFormat(dateLocale).format(group.monthlyFee)} UZS
                             </span>
                           ) : (
                             <span className="text-gray-300 italic">—</span>
                           )}
                         </td>
                         <td className="px-4 py-3">
-                          <StudentBadge count={group._count.students} />
+                          <StudentBadge count={group._count.students} label={t.common.students} />
                         </td>
                         <td className="px-4 py-3 text-gray-500">
-                          {formatDate(group.createdAt)}
+                          {formatDate(group.createdAt, dateLocale)}
                         </td>
                         <td className="px-4 py-3">
                           {deletingId === group.id ? (
                             <span className="flex items-center gap-1 text-gray-400 text-xs">
-                              <Spinner /> Deleting…
+                              <Spinner /> {t.common.deleting}
                             </span>
                           ) : (
                             <div className="flex items-center gap-2">
@@ -381,13 +379,13 @@ export default function GroupsPage() {
                                 onClick={() => openEdit(group)}
                                 className={ghostBtnCls}
                               >
-                                Edit
+                                {t.common.edit}
                               </button>
                               <button
                                 onClick={() => setDeleteConfirmId(group.id)}
                                 className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 transition-colors"
                               >
-                                Delete
+                                {t.common.delete}
                               </button>
                             </div>
                           )}
@@ -406,7 +404,7 @@ export default function GroupsPage() {
         <Backdrop onClick={closeEdit}>
           <ModalCard onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-semibold text-gray-900">Edit Group</h2>
+              <h2 className="text-lg font-semibold text-gray-900">{t.groups.editGroup}</h2>
               <button
                 onClick={closeEdit}
                 className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -420,7 +418,7 @@ export default function GroupsPage() {
             <form onSubmit={handleSaveEdit} className="space-y-4">
               <div>
                 <label className={labelCls}>
-                  Group Name <span className="text-red-500">*</span>
+                  {t.groups.groupName} <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -432,28 +430,22 @@ export default function GroupsPage() {
                 />
               </div>
               <div>
-                <label className={labelCls}>
-                  Description{" "}
-                  <span className="text-gray-400 font-normal">(optional)</span>
-                </label>
+                <label className={labelCls}>{t.groups.descriptionLabel}</label>
                 <textarea
                   value={editDescription}
                   onChange={(e) => setEditDescription(e.target.value)}
                   rows={2}
-                  placeholder="Group schedule, level, or any notes"
+                  placeholder={t.groups.scheduleHint}
                   className={inputCls + " resize-none"}
                 />
               </div>
               <div>
-                <label className={labelCls}>
-                  Monthly Fee (UZS){" "}
-                  <span className="text-gray-400 font-normal">(optional)</span>
-                </label>
+                <label className={labelCls}>{t.groups.monthlyFee}</label>
                 <input
                   type="number"
                   min="0"
                   step="1000"
-                  placeholder="e.g. 500000"
+                  placeholder={t.groups.feePlaceholder}
                   value={editMonthlyFee}
                   onChange={(e) => setEditMonthlyFee(e.target.value)}
                   className={inputCls}
@@ -462,11 +454,11 @@ export default function GroupsPage() {
               {editError && <ErrorPill message={editError} />}
               <div className="flex justify-end gap-3 pt-1">
                 <button type="button" onClick={closeEdit} className={ghostBtnCls}>
-                  Cancel
+                  {t.common.cancel}
                 </button>
                 <button type="submit" disabled={saving} className={primaryBtnCls}>
                   {saving && <Spinner />}
-                  {saving ? "Saving…" : "Save Changes"}
+                  {saving ? t.common.saving : t.common.saveChanges}
                 </button>
               </div>
             </form>
@@ -484,14 +476,13 @@ export default function GroupsPage() {
                 </svg>
               </div>
               <div>
-                <h2 className="text-base font-semibold text-gray-900">Delete group?</h2>
+                <h2 className="text-base font-semibold text-gray-900">{t.groups.deleteGroup}</h2>
                 <p className="mt-1 text-sm text-gray-500">
                   <span className="font-medium text-gray-700">{confirmGroup.name}</span>{" "}
-                  will be permanently deleted.
+                  {t.groups.deleteConfirmSuffix}
                   {confirmGroup._count.students > 0 && (
                     <span className="block mt-1 text-amber-600">
-                      {confirmGroup._count.students} student
-                      {confirmGroup._count.students !== 1 ? "s" : ""} will be unassigned from this group.
+                      {confirmGroup._count.students} {t.groups.studentsWillBeUnassigned}
                     </span>
                   )}
                 </p>
@@ -502,13 +493,13 @@ export default function GroupsPage() {
                 onClick={() => setDeleteConfirmId(null)}
                 className={ghostBtnCls}
               >
-                Cancel
+                {t.common.cancel}
               </button>
               <button
                 onClick={() => handleDelete(deleteConfirmId)}
                 className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors"
               >
-                Delete Group
+                {t.groups.deleteGroup}
               </button>
             </div>
           </ModalCard>

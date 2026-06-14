@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 
 type UserRole = "ADMIN" | "MANAGER" | "TEACHER";
 
@@ -35,7 +36,6 @@ const ghostBtnCls =
 const dangerBtnCls =
   "inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors";
 
-const ROLE_LABELS: Record<UserRole, string> = { ADMIN: "Admin", MANAGER: "Manager", TEACHER: "Teacher" };
 const ROLE_COLORS: Record<UserRole, string> = {
   ADMIN: "bg-violet-50 text-violet-700 border-violet-200",
   MANAGER: "bg-blue-50 text-blue-700 border-blue-200",
@@ -89,10 +89,6 @@ function Th({ children }: { children: React.ReactNode }) {
   );
 }
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
-}
-
 // ── Empty forms ──────────────────────────────────────────────────────────────
 
 const EMPTY_CREATE = {
@@ -104,6 +100,18 @@ const EMPTY_EDIT = { fullName: "", email: "", role: "ADMIN" as UserRole, isActiv
 // ── Main Page ────────────────────────────────────────────────────────────────
 
 export default function UsersPage() {
+  const { t, dateLocale } = useTranslation();
+
+  const ROLE_LABELS: Record<UserRole, string> = {
+    ADMIN: t.users.roleAdmin,
+    MANAGER: t.users.roleManager,
+    TEACHER: t.users.roleTeacher,
+  };
+
+  function formatDate(iso: string) {
+    return new Date(iso).toLocaleDateString(dateLocale, { day: "2-digit", month: "short", year: "numeric" });
+  }
+
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [listError, setListError] = useState<string | null>(null);
@@ -315,23 +323,21 @@ export default function UsersPage() {
           {/* Header */}
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
-              <p className="mt-1 text-sm text-gray-500">
-                Manage login accounts for administrators and teachers.
-              </p>
+              <h1 className="text-2xl font-bold text-gray-900">{t.users.title}</h1>
+              <p className="mt-1 text-sm text-gray-500">{t.users.subtitle}</p>
             </div>
             <div className="flex items-center gap-4">
               {!loading && (
                 <div className="text-sm text-gray-500 hidden sm:flex gap-4">
-                  <span><span className="font-semibold text-gray-900">{users.length}</span> total</span>
-                  <span className="text-emerald-600"><span className="font-semibold">{activeCount}</span> active</span>
+                  <span><span className="font-semibold text-gray-900">{users.length}</span> {t.users.total}</span>
+                  <span className="text-emerald-600"><span className="font-semibold">{activeCount}</span> {t.users.active}</span>
                 </div>
               )}
               <button onClick={openCreate} className={primaryBtnCls}>
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                 </svg>
-                Create User
+                {t.users.createUser}
               </button>
             </div>
           </div>
@@ -340,7 +346,7 @@ export default function UsersPage() {
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
             <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-4 flex-wrap">
               <h2 className="text-base font-semibold text-gray-900 flex-1">
-                All Users
+                {t.users.allUsers}
                 {!loading && (
                   <span className="ml-2 text-sm font-normal text-gray-400">
                     ({filtered.length}{query ? ` of ${users.length}` : ""})
@@ -353,7 +359,7 @@ export default function UsersPage() {
                 </svg>
                 <input
                   type="text"
-                  placeholder="Search name, email…"
+                  placeholder={t.users.searchPlaceholder}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="pl-9 pr-4 py-2 text-sm rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none w-52"
@@ -373,27 +379,27 @@ export default function UsersPage() {
             {loading ? (
               <div className="flex items-center justify-center gap-2 py-16 text-gray-400">
                 <Spinner size="md" />
-                <span className="text-sm">Loading users…</span>
+                <span className="text-sm">{t.users.loading}</span>
               </div>
             ) : filtered.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-gray-400">
                 <svg className="w-10 h-10 mb-3 text-gray-300" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
                 </svg>
-                <p className="text-sm">{query ? `No users match "${search}".` : "No users yet."}</p>
-                {query && <button onClick={() => setSearch("")} className="mt-2 text-sm text-blue-600 hover:underline">Clear search</button>}
+                <p className="text-sm">{query ? t.users.noUsersMatch : t.users.noUsers}</p>
+                {query && <button onClick={() => setSearch("")} className="mt-2 text-sm text-blue-600 hover:underline">{t.common.clearSearch}</button>}
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50 border-b border-gray-100">
                     <tr>
-                      <Th>User</Th>
-                      <Th>Role</Th>
-                      <Th>Teacher Profile</Th>
-                      <Th>Status</Th>
-                      <Th>Joined</Th>
-                      <Th>Actions</Th>
+                      <Th>{t.users.userColumn}</Th>
+                      <Th>{t.users.roleColumn}</Th>
+                      <Th>{t.users.teacherProfile}</Th>
+                      <Th>{t.users.statusColumn}</Th>
+                      <Th>{t.users.joined}</Th>
+                      <Th>{t.common.actions}</Th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
@@ -429,7 +435,7 @@ export default function UsersPage() {
                           <button
                             onClick={() => handleToggleActive(user)}
                             disabled={togglingId === user.id}
-                            title={user.isActive ? "Click to deactivate" : "Click to activate"}
+                            title={user.isActive ? t.users.deactivate : t.users.activate}
                             className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                               user.isActive
                                 ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
@@ -439,32 +445,32 @@ export default function UsersPage() {
                             {togglingId === user.id ? <Spinner /> : (
                               <span className={`inline-block w-1.5 h-1.5 rounded-full ${user.isActive ? "bg-emerald-500" : "bg-gray-400"}`} />
                             )}
-                            {user.isActive ? "Active" : "Inactive"}
+                            {user.isActive ? t.users.statusActive : t.users.statusInactive}
                           </button>
                         </td>
                         <td className="px-4 py-3 text-xs text-gray-400">{formatDate(user.createdAt)}</td>
                         <td className="px-4 py-3">
                           {deletingId === user.id ? (
-                            <span className="flex items-center gap-1 text-gray-400 text-xs"><Spinner /> Deleting…</span>
+                            <span className="flex items-center gap-1 text-gray-400 text-xs"><Spinner /> {t.common.deleting}</span>
                           ) : (
                             <div className="flex items-center gap-1.5 flex-wrap">
                               <button
                                 onClick={() => openEdit(user)}
                                 className="inline-flex items-center rounded border border-gray-200 px-2.5 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors"
                               >
-                                Edit
+                                {t.common.edit}
                               </button>
                               <button
                                 onClick={() => openResetPassword(user)}
                                 className="inline-flex items-center rounded border border-amber-200 px-2.5 py-1 text-xs font-medium text-amber-700 hover:bg-amber-50 transition-colors"
                               >
-                                Reset Password
+                                {t.users.resetPassword}
                               </button>
                               <button
                                 onClick={() => setDeleteConfirmId(user.id)}
                                 className="inline-flex items-center rounded border border-red-200 px-2.5 py-1 text-xs font-medium text-red-600 hover:bg-red-50 transition-colors"
                               >
-                                Delete
+                                {t.common.delete}
                               </button>
                             </div>
                           )}
@@ -484,7 +490,7 @@ export default function UsersPage() {
         <Backdrop onClick={() => setShowCreate(false)}>
           <ModalCard onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-base font-semibold text-gray-900">Create User</h2>
+              <h2 className="text-base font-semibold text-gray-900">{t.users.createUser}</h2>
               <button onClick={() => setShowCreate(false)} className="text-gray-400 hover:text-gray-600">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -494,24 +500,24 @@ export default function UsersPage() {
             <form onSubmit={handleCreate} className="space-y-4">
               {/* Role selector */}
               <div>
-                <label className={labelCls}>Role <span className="text-red-500">*</span></label>
+                <label className={labelCls}>{t.users.roleColumn} <span className="text-red-500">*</span></label>
                 <select
                   value={createForm.role}
                   onChange={(e) => setCreateForm((p) => ({ ...p, role: e.target.value as UserRole }))}
                   className={inputCls}
                 >
-                  <option value="ADMIN">Admin</option>
-                  <option value="MANAGER">Manager</option>
-                  <option value="TEACHER">Teacher</option>
+                  <option value="ADMIN">{t.users.roleAdmin}</option>
+                  <option value="MANAGER">{t.users.roleManager}</option>
+                  <option value="TEACHER">{t.users.roleTeacher}</option>
                 </select>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="sm:col-span-2">
-                  <label className={labelCls}>Full Name <span className="text-red-500">*</span></label>
+                  <label className={labelCls}>{t.users.fullName} <span className="text-red-500">*</span></label>
                   <input
                     type="text"
-                    placeholder="e.g. Aziz Karimov"
+                    placeholder={t.users.fullNamePlaceholder}
                     value={createForm.fullName}
                     onChange={(e) => setCreateForm((p) => ({ ...p, fullName: e.target.value }))}
                     required
@@ -519,10 +525,10 @@ export default function UsersPage() {
                   />
                 </div>
                 <div className="sm:col-span-2">
-                  <label className={labelCls}>Email <span className="text-red-500">*</span></label>
+                  <label className={labelCls}>{t.auth.emailLabel} <span className="text-red-500">*</span></label>
                   <input
                     type="email"
-                    placeholder="user@example.com"
+                    placeholder={t.users.emailPlaceholder}
                     value={createForm.email}
                     onChange={(e) => setCreateForm((p) => ({ ...p, email: e.target.value }))}
                     required
@@ -530,10 +536,10 @@ export default function UsersPage() {
                   />
                 </div>
                 <div className="sm:col-span-2">
-                  <label className={labelCls}>Temporary Password <span className="text-red-500">*</span></label>
+                  <label className={labelCls}>{t.users.tempPassword} <span className="text-red-500">*</span></label>
                   <input
                     type="password"
-                    placeholder="Min. 6 characters"
+                    placeholder={t.users.minChars}
                     value={createForm.password}
                     onChange={(e) => setCreateForm((p) => ({ ...p, password: e.target.value }))}
                     required
@@ -546,7 +552,7 @@ export default function UsersPage() {
                 {createForm.role === "TEACHER" && (
                   <>
                     <div>
-                      <label className={labelCls}>Phone <span className="text-red-500">*</span></label>
+                      <label className={labelCls}>{t.students.phone} <span className="text-red-500">*</span></label>
                       <input
                         type="tel"
                         placeholder="+998901234567"
@@ -557,10 +563,10 @@ export default function UsersPage() {
                       />
                     </div>
                     <div>
-                      <label className={labelCls}>Subject <span className="text-red-500">*</span></label>
+                      <label className={labelCls}>{t.teachers.subject} <span className="text-red-500">*</span></label>
                       <input
                         type="text"
-                        placeholder="e.g. English, Math"
+                        placeholder={t.users.subjectPlaceholder}
                         value={createForm.subject}
                         onChange={(e) => setCreateForm((p) => ({ ...p, subject: e.target.value }))}
                         required
@@ -568,12 +574,12 @@ export default function UsersPage() {
                       />
                     </div>
                     <div className="sm:col-span-2">
-                      <label className={labelCls}>Salary (UZS) <span className="text-red-500">*</span></label>
+                      <label className={labelCls}>{t.users.salaryLabel} <span className="text-red-500">*</span></label>
                       <input
                         type="number"
                         min="0"
                         step="any"
-                        placeholder="e.g. 3000000"
+                        placeholder={t.users.salaryPlaceholder}
                         value={createForm.salary}
                         onChange={(e) => setCreateForm((p) => ({ ...p, salary: e.target.value }))}
                         required
@@ -586,17 +592,17 @@ export default function UsersPage() {
 
               {createForm.role === "TEACHER" && (
                 <p className="text-xs text-gray-500 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2">
-                  A Teacher record will be automatically created and linked to this account.
+                  {t.users.teacherNote}
                 </p>
               )}
 
               {createError && <ErrorPill message={createError} />}
 
               <div className="flex justify-end gap-3 pt-1">
-                <button type="button" onClick={() => setShowCreate(false)} className={ghostBtnCls}>Cancel</button>
+                <button type="button" onClick={() => setShowCreate(false)} className={ghostBtnCls}>{t.common.cancel}</button>
                 <button type="submit" disabled={creating} className={primaryBtnCls}>
                   {creating && <Spinner />}
-                  {creating ? "Creating…" : "Create User"}
+                  {creating ? t.users.creating : t.users.createUser}
                 </button>
               </div>
             </form>
@@ -610,7 +616,7 @@ export default function UsersPage() {
           <ModalCard onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-5">
               <div>
-                <h2 className="text-base font-semibold text-gray-900">Edit User</h2>
+                <h2 className="text-base font-semibold text-gray-900">{t.users.editUser}</h2>
                 <p className="text-xs text-gray-400 mt-0.5">{editingUser.email}</p>
               </div>
               <button onClick={() => setEditingUser(null)} className="text-gray-400 hover:text-gray-600">
@@ -621,7 +627,7 @@ export default function UsersPage() {
             </div>
             <form onSubmit={handleSaveEdit} className="space-y-4">
               <div>
-                <label className={labelCls}>Full Name</label>
+                <label className={labelCls}>{t.users.fullName}</label>
                 <input
                   type="text"
                   value={editForm.fullName}
@@ -632,7 +638,7 @@ export default function UsersPage() {
                 />
               </div>
               <div>
-                <label className={labelCls}>Email</label>
+                <label className={labelCls}>{t.auth.emailLabel}</label>
                 <input
                   type="email"
                   value={editForm.email}
@@ -642,15 +648,15 @@ export default function UsersPage() {
                 />
               </div>
               <div>
-                <label className={labelCls}>Role</label>
+                <label className={labelCls}>{t.users.roleColumn}</label>
                 <select
                   value={editForm.role}
                   onChange={(e) => setEditForm((p) => ({ ...p, role: e.target.value as UserRole }))}
                   className={inputCls}
                 >
-                  <option value="ADMIN">Admin</option>
-                  <option value="MANAGER">Manager</option>
-                  <option value="TEACHER">Teacher</option>
+                  <option value="ADMIN">{t.users.roleAdmin}</option>
+                  <option value="MANAGER">{t.users.roleManager}</option>
+                  <option value="TEACHER">{t.users.roleTeacher}</option>
                 </select>
               </div>
               <div className="flex items-center gap-2">
@@ -661,14 +667,14 @@ export default function UsersPage() {
                   onChange={(e) => setEditForm((p) => ({ ...p, isActive: e.target.checked }))}
                   className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                 />
-                <label htmlFor="isActive" className="text-sm text-gray-700">Account active</label>
+                <label htmlFor="isActive" className="text-sm text-gray-700">{t.users.accountActive}</label>
               </div>
               {editError && <ErrorPill message={editError} />}
               <div className="flex justify-end gap-3 pt-1">
-                <button type="button" onClick={() => setEditingUser(null)} className={ghostBtnCls}>Cancel</button>
+                <button type="button" onClick={() => setEditingUser(null)} className={ghostBtnCls}>{t.common.cancel}</button>
                 <button type="submit" disabled={editSaving} className={primaryBtnCls}>
                   {editSaving && <Spinner />}
-                  {editSaving ? "Saving…" : "Save Changes"}
+                  {editSaving ? t.common.saving : t.common.saveChanges}
                 </button>
               </div>
             </form>
@@ -682,7 +688,7 @@ export default function UsersPage() {
           <ModalCard onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-5">
               <div>
-                <h2 className="text-base font-semibold text-gray-900">Reset Password</h2>
+                <h2 className="text-base font-semibold text-gray-900">{t.users.resetPassword}</h2>
                 <p className="text-xs text-gray-400 mt-0.5">{resetTarget.fullName}</p>
               </div>
               <button onClick={() => setResetUserId(null)} className="text-gray-400 hover:text-gray-600">
@@ -693,10 +699,10 @@ export default function UsersPage() {
             </div>
             <form onSubmit={handleResetPassword} className="space-y-4">
               <div>
-                <label className={labelCls}>New Password <span className="text-red-500">*</span></label>
+                <label className={labelCls}>{t.users.newPassword} <span className="text-red-500">*</span></label>
                 <input
                   type="password"
-                  placeholder="Min. 6 characters"
+                  placeholder={t.users.minChars}
                   value={resetPassword}
                   onChange={(e) => setResetPassword(e.target.value)}
                   required
@@ -707,10 +713,10 @@ export default function UsersPage() {
               </div>
               {resetError && <ErrorPill message={resetError} />}
               <div className="flex justify-end gap-3 pt-1">
-                <button type="button" onClick={() => setResetUserId(null)} className={ghostBtnCls}>Cancel</button>
+                <button type="button" onClick={() => setResetUserId(null)} className={ghostBtnCls}>{t.common.cancel}</button>
                 <button type="submit" disabled={resetting} className={primaryBtnCls}>
                   {resetting && <Spinner />}
-                  {resetting ? "Resetting…" : "Reset Password"}
+                  {resetting ? t.common.saving : t.users.resetPassword}
                 </button>
               </div>
             </form>
@@ -729,20 +735,20 @@ export default function UsersPage() {
                 </svg>
               </div>
               <div>
-                <h2 className="text-base font-semibold text-gray-900">Delete user?</h2>
+                <h2 className="text-base font-semibold text-gray-900">{t.users.deleteUser}</h2>
                 <p className="mt-1 text-sm text-gray-500">
-                  <span className="font-medium text-gray-700">{deleteTarget.fullName}</span> ({deleteTarget.email}) will be permanently removed.
+                  <span className="font-medium text-gray-700">{deleteTarget.fullName}</span> ({deleteTarget.email}) {t.users.deleteConfirm}
                   {deleteTarget.teacher && (
                     <span className="block mt-1 text-amber-700 text-xs">
-                      The linked Teacher record will remain but will be unlinked from this account.
+                      {t.users.linkedTeacherNote}
                     </span>
                   )}
                 </p>
               </div>
             </div>
             <div className="flex justify-end gap-3 mt-6">
-              <button onClick={() => setDeleteConfirmId(null)} className={ghostBtnCls}>Cancel</button>
-              <button onClick={() => handleDelete(deleteConfirmId)} className={dangerBtnCls}>Delete User</button>
+              <button onClick={() => setDeleteConfirmId(null)} className={ghostBtnCls}>{t.common.cancel}</button>
+              <button onClick={() => handleDelete(deleteConfirmId)} className={dangerBtnCls}>{t.users.deleteUser}</button>
             </div>
           </ModalCard>
         </Backdrop>

@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import AppShell from "@/app/components/AppShell";
 import { getSession } from "@/lib/dal";
+import { I18nProvider } from "@/lib/i18n/provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,19 +33,21 @@ export default async function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-screen">
-        {session ? (
-          <AppShell
-            user={{
-              fullName: session.fullName,
-              email: session.email,
-              role: session.role,
-            }}
-          >
-            {children}
-          </AppShell>
-        ) : (
-          <main className="min-h-screen">{children}</main>
-        )}
+        <I18nProvider>
+          {session ? (
+            <AppShell
+              user={{
+                fullName: session.fullName,
+                email: session.email,
+                role: session.role,
+              }}
+            >
+              {children}
+            </AppShell>
+          ) : (
+            <main className="min-h-screen">{children}</main>
+          )}
+        </I18nProvider>
       </body>
     </html>
   );

@@ -4,12 +4,15 @@ import { useActionState, useEffect, useState } from "react";
 import { login, type LoginState } from "@/lib/auth-actions";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
+import { useTranslation } from "@/lib/i18n/useTranslation";
+import { LanguageSwitcher } from "@/app/components/LanguageSwitcher";
 
 function LoginForm() {
   const searchParams = useSearchParams();
   const from = searchParams.get("from");
   const [state, action, pending] = useActionState<LoginState, FormData>(login, undefined);
   const [needsSetup, setNeedsSetup] = useState<boolean | null>(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     fetch("/api/auth/setup")
@@ -22,30 +25,31 @@ function LoginForm() {
     <div className="min-h-screen bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-700 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo / title */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-8 relative">
+          <div className="absolute right-0 top-0">
+            <LanguageSwitcher />
+          </div>
           <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center mx-auto mb-4 shadow-lg">
             <span className="text-white font-black text-2xl">O</span>
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">O&apos;quv Markaz CRM</h1>
-          <p className="text-blue-200 text-sm mt-1">Learning Center Management</p>
+          <h1 className="text-2xl font-bold text-white tracking-tight">{t.auth.title}</h1>
+          <p className="text-blue-200 text-sm mt-1">{t.auth.subtitle}</p>
         </div>
 
         {/* Card */}
         <div className="bg-white rounded-2xl shadow-2xl p-8">
-          <h2 className="text-lg font-bold text-gray-900 mb-1">Sign in</h2>
-          <p className="text-sm text-gray-500 mb-6">Enter your credentials to access the CRM.</p>
+          <h2 className="text-lg font-bold text-gray-900 mb-1">{t.auth.signIn}</h2>
+          <p className="text-sm text-gray-500 mb-6">{t.auth.subtitle}</p>
 
           {needsSetup && (
             <div className="mb-5 p-4 rounded-xl bg-amber-50 border border-amber-200">
-              <p className="text-sm font-semibold text-amber-800 mb-1">First-time setup required</p>
-              <p className="text-xs text-amber-700 mb-3">
-                No accounts exist yet. Create an admin account to get started.
-              </p>
+              <p className="text-sm font-semibold text-amber-800 mb-1">{t.auth.firstTimeSetup}</p>
+              <p className="text-xs text-amber-700 mb-3">{t.auth.noAccountsYet}</p>
               <a
                 href="/setup"
                 className="inline-block text-xs font-semibold text-amber-900 bg-amber-100 hover:bg-amber-200 px-3 py-1.5 rounded-lg transition-colors"
               >
-                Create admin account →
+                {t.auth.createAdminAccount}
               </a>
             </div>
           )}
@@ -66,7 +70,7 @@ function LoginForm() {
 
             <div>
               <label htmlFor="email" className="block text-xs font-semibold text-gray-700 mb-1.5">
-                Email address
+                {t.auth.emailLabel}
               </label>
               <input
                 id="email"
@@ -74,14 +78,14 @@ function LoginForm() {
                 type="email"
                 autoComplete="email"
                 required
-                placeholder="admin@example.com"
+                placeholder={t.auth.emailPlaceholder}
                 className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition bg-gray-50 focus:bg-white"
               />
             </div>
 
             <div>
               <label htmlFor="password" className="block text-xs font-semibold text-gray-700 mb-1.5">
-                Password
+                {t.auth.passwordLabel}
               </label>
               <input
                 id="password"
@@ -102,21 +106,21 @@ function LoginForm() {
               {pending ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Signing in…
+                  {t.auth.signingIn}
                 </>
               ) : (
-                "Sign in"
+                t.auth.signIn
               )}
             </button>
           </form>
 
           <p className="text-xs text-gray-400 text-center mt-6">
-            Contact your administrator if you don&apos;t have an account.
+            {t.auth.contactAdmin}
           </p>
         </div>
 
         <p className="text-xs text-blue-200/70 text-center mt-6">
-          O&apos;quv Markaz CRM &copy; {new Date().getFullYear()}
+          {t.auth.copyright} {new Date().getFullYear()}
         </p>
       </div>
     </div>

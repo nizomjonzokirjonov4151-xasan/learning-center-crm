@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -18,6 +19,7 @@ type ReportStatus = "idle" | "sending" | "sent" | "error";
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function StatusBadge({ active }: { active: boolean }) {
+  const { t } = useTranslation();
   return (
     <span
       className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
@@ -29,7 +31,7 @@ function StatusBadge({ active }: { active: boolean }) {
       <span
         className={`w-1.5 h-1.5 rounded-full ${active ? "bg-emerald-500" : "bg-gray-400"}`}
       />
-      {active ? "Active" : "Inactive"}
+      {active ? t.common.active : t.common.inactive}
     </span>
   );
 }
@@ -37,6 +39,7 @@ function StatusBadge({ active }: { active: boolean }) {
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function TelegramPage() {
+  const { t } = useTranslation();
   const [settings, setSettings] = useState<Settings>({
     botToken: "",
     adminChatId: "",
@@ -175,10 +178,8 @@ export default function TelegramPage() {
               </svg>
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Telegram Bot</h1>
-              <p className="mt-1 text-sm text-gray-500">
-                Configure notifications and daily reports sent to your Telegram chat.
-              </p>
+              <h1 className="text-2xl font-bold text-gray-900">{t.telegram.title}</h1>
+              <p className="mt-1 text-sm text-gray-500">{t.telegram.subtitle}</p>
             </div>
           </div>
           <StatusBadge active={settings.isActive} />
@@ -197,8 +198,8 @@ export default function TelegramPage() {
         {/* ── Settings card ────────────────────────────────────────────────── */}
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-            <h2 className="text-sm font-bold text-gray-900">Bot Configuration</h2>
-            <span className="text-xs text-gray-400">Settings saved in database</span>
+            <h2 className="text-sm font-bold text-gray-900">{t.telegram.botConfiguration}</h2>
+            <span className="text-xs text-gray-400">{t.telegram.settingsSaved}</span>
           </div>
 
           <div className="p-6 space-y-5">
@@ -206,10 +207,8 @@ export default function TelegramPage() {
             {/* Active toggle */}
             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200">
               <div>
-                <p className="text-sm font-semibold text-gray-800">Enable Telegram Notifications</p>
-                <p className="text-xs text-gray-500 mt-0.5">
-                  When enabled, the bot sends event notifications and daily reports.
-                </p>
+                <p className="text-sm font-semibold text-gray-800">{t.telegram.enableNotifications}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{t.telegram.enableDesc}</p>
               </div>
               <button
                 onClick={() => setIsActiveInput((v) => !v)}
@@ -228,9 +227,9 @@ export default function TelegramPage() {
             {/* Bot Token */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                Bot Token
+                {t.telegram.botToken}
                 <span className="ml-1 text-xs font-normal text-gray-400">
-                  — from @BotFather on Telegram
+                  {t.telegram.botTokenHint}
                 </span>
               </label>
               <div className="relative">
@@ -260,25 +259,23 @@ export default function TelegramPage() {
                 </button>
               </div>
               {settings.hasToken && (
-                <p className="mt-1.5 text-xs text-gray-400">
-                  A token is already saved. Enter a new one to replace it, or leave unchanged to keep the current token.
-                </p>
+                <p className="mt-1.5 text-xs text-gray-400">{t.telegram.tokenSaved}</p>
               )}
             </div>
 
             {/* Chat ID */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                Admin Chat ID
+                {t.telegram.chatId}
                 <span className="ml-1 text-xs font-normal text-gray-400">
-                  — your personal or group chat ID
+                  {t.telegram.chatIdHint}
                 </span>
               </label>
               <input
                 type="text"
                 value={chatIdInput}
                 onChange={(e) => setChatIdInput(e.target.value)}
-                placeholder="-1001234567890 or 123456789"
+                placeholder={t.telegram.chatIdPlaceholder}
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
               <p className="mt-1.5 text-xs text-gray-400">
@@ -305,7 +302,7 @@ export default function TelegramPage() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
-                  Saving…
+                  {t.telegram.saving}
                 </>
               )}
               {saveStatus === "saved" && (
@@ -313,16 +310,16 @@ export default function TelegramPage() {
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
                   </svg>
-                  Saved!
+                  {t.telegram.saved}
                 </>
               )}
-              {saveStatus === "error" && "Save Failed — Retry"}
+              {saveStatus === "error" && t.telegram.saveFailed}
               {saveStatus === "idle" && (
                 <>
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" />
                   </svg>
-                  Save Settings
+                  {t.telegram.saveSettings}
                 </>
               )}
             </button>
@@ -332,10 +329,8 @@ export default function TelegramPage() {
         {/* ── Test Connection card ─────────────────────────────────────────── */}
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100">
-            <h2 className="text-sm font-bold text-gray-900">Test Connection</h2>
-            <p className="text-xs text-gray-500 mt-0.5">
-              Sends a test message to verify the bot token and chat ID work correctly.
-            </p>
+            <h2 className="text-sm font-bold text-gray-900">{t.telegram.testConnection}</h2>
+            <p className="text-xs text-gray-500 mt-0.5">{t.telegram.testDesc}</p>
           </div>
           <div className="p-6 space-y-4">
 
@@ -345,10 +340,10 @@ export default function TelegramPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                 </svg>
                 <div>
-                  <p className="font-semibold">Connection successful!</p>
+                  <p className="font-semibold">{t.telegram.connectionSuccess}</p>
                   {testBotName && (
                     <p className="text-xs mt-0.5 text-emerald-600">
-                      Bot <strong>@{testBotName}</strong> sent a test message to your chat.
+                      Bot <strong>@{testBotName}</strong> {t.telegram.botSentMessage}
                     </p>
                   )}
                 </div>
@@ -361,7 +356,7 @@ export default function TelegramPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
                 </svg>
                 <div>
-                  <p className="font-semibold">Connection failed</p>
+                  <p className="font-semibold">{t.telegram.connectionFailed}</p>
                   <p className="text-xs mt-0.5 font-mono text-red-600 break-all">{testError}</p>
                 </div>
               </div>
@@ -384,7 +379,7 @@ export default function TelegramPage() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
-                  Testing…
+                  {t.telegram.testing}
                 </>
               ) : (
                 <>
@@ -392,7 +387,7 @@ export default function TelegramPage() {
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248-1.97 9.281c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.833.94z"/>
                   </svg>
-                  Test Telegram Connection
+                  {t.telegram.testTelegram}
                 </>
               )}
             </button>
@@ -402,21 +397,19 @@ export default function TelegramPage() {
         {/* ── Daily Report card ────────────────────────────────────────────── */}
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100">
-            <h2 className="text-sm font-bold text-gray-900">Daily Report</h2>
-            <p className="text-xs text-gray-500 mt-0.5">
-              Automatically sent every day at <strong>21:00</strong>. You can also trigger it manually below.
-            </p>
+            <h2 className="text-sm font-bold text-gray-900">{t.telegram.sendDailyReport}</h2>
+            <p className="text-xs text-gray-500 mt-0.5">{t.telegram.dailyReportDesc}</p>
           </div>
           <div className="p-6 space-y-4">
 
             {/* What's included */}
             <div className="grid grid-cols-2 gap-3">
               {[
-                { icon: "👥", label: "Total Students" },
-                { icon: "📁", label: "Active Groups" },
-                { icon: "📋", label: "Today's Attendance" },
-                { icon: "💰", label: "Today's Payments" },
-              ].map(({ icon, label }) => (
+                { icon: "👥", label: t.analytics.totalStudents },
+                { icon: "📁", label: t.analytics.totalGroups },
+                { icon: "📋", label: t.dashboard.todaysAttendance },
+                { icon: "💰", label: t.dashboard.paymentsThisMonth },
+              ].map(({ icon, label }: { icon: string; label: string }) => (
                 <div
                   key={label}
                   className="flex items-center gap-2.5 px-3 py-2.5 bg-gray-50 rounded-xl border border-gray-200"
@@ -432,7 +425,7 @@ export default function TelegramPage() {
                 <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                 </svg>
-                Daily report sent to your Telegram chat!
+                {t.telegram.reportSent}
               </div>
             )}
 
@@ -456,14 +449,14 @@ export default function TelegramPage() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
-                  Sending…
+                  {t.telegram.sending}
                 </>
               ) : (
                 <>
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
                   </svg>
-                  Send Daily Report Now
+                  {t.telegram.sendNow}
                 </>
               )}
             </button>
@@ -473,35 +466,33 @@ export default function TelegramPage() {
         {/* ── Notification events card ─────────────────────────────────────── */}
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100">
-            <h2 className="text-sm font-bold text-gray-900">Event Notifications</h2>
-            <p className="text-xs text-gray-500 mt-0.5">
-              These events automatically trigger a Telegram message when the bot is active.
-            </p>
+            <h2 className="text-sm font-bold text-gray-900">{t.telegram.eventNotifications}</h2>
+            <p className="text-xs text-gray-500 mt-0.5">{t.telegram.eventNotificationsDesc}</p>
           </div>
           <div className="divide-y divide-gray-100">
             {[
               {
                 icon: "🎓",
-                title: "New Student Added",
-                desc: "Name, phone number, and group assignment",
+                title: t.telegram.eventNewStudent,
+                desc: t.telegram.eventNewStudentDesc,
                 color: "bg-blue-50 text-blue-700",
               },
               {
                 icon: "💰",
-                title: "New Payment Recorded",
-                desc: "Student name, amount (UZS), period, and optional note",
+                title: t.telegram.eventNewPayment,
+                desc: t.telegram.eventNewPaymentDesc,
                 color: "bg-green-50 text-green-700",
               },
               {
                 icon: "👨‍🏫",
-                title: "New Teacher Added",
-                desc: "Name, phone, subject, and salary",
+                title: t.telegram.eventNewTeacher,
+                desc: t.telegram.eventNewTeacherDesc,
                 color: "bg-violet-50 text-violet-700",
               },
               {
                 icon: "📁",
-                title: "New Group Created",
-                desc: "Group name and description",
+                title: t.telegram.eventNewGroup,
+                desc: t.telegram.eventNewGroupDesc,
                 color: "bg-amber-50 text-amber-700",
               },
             ].map(({ icon, title, desc, color }) => (
@@ -515,7 +506,7 @@ export default function TelegramPage() {
                 </div>
                 <div className="ml-auto flex-shrink-0">
                   <span className="text-xs font-medium px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full">
-                    Enabled
+                    {t.telegram.eventEnabled}
                   </span>
                 </div>
               </div>
@@ -529,15 +520,15 @@ export default function TelegramPage() {
             <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />
             </svg>
-            <h3 className="text-sm font-bold text-blue-800">Setup Guide</h3>
+            <h3 className="text-sm font-bold text-blue-800">{t.telegram.setupGuide}</h3>
           </div>
           <ol className="space-y-2 text-sm text-blue-700 list-decimal list-inside">
-            <li>Open Telegram and message <strong>@BotFather</strong></li>
-            <li>Send <code className="bg-blue-100 px-1 rounded">/newbot</code> and follow the steps to create your bot</li>
-            <li>Copy the bot token BotFather gives you and paste it above</li>
-            <li>Message <strong>@userinfobot</strong> to find your Chat ID</li>
-            <li>Paste your Chat ID above, then click <em>Save Settings</em></li>
-            <li>Click <em>Test Telegram Connection</em> to verify everything works</li>
+            <li>{t.telegram.setupStep1}</li>
+            <li>{t.telegram.setupStep2}</li>
+            <li>{t.telegram.setupStep3}</li>
+            <li>{t.telegram.setupStep4}</li>
+            <li>{t.telegram.setupStep5}</li>
+            <li>{t.telegram.setupStep6}</li>
           </ol>
         </div>
 

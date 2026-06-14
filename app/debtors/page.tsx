@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 
 type Debtor = {
   id: string;
@@ -14,9 +15,6 @@ type Debtor = {
 };
 
 type Filter = "all" | "7days" | "30days";
-
-const fmt = (n: number) =>
-  new Intl.NumberFormat("en-US").format(Math.round(n));
 
 function Spinner() {
   return (
@@ -49,6 +47,8 @@ function SkeletonRow() {
 }
 
 export default function DebtorsPage() {
+  const { t, dateLocale } = useTranslation();
+  const fmt = (n: number) => new Intl.NumberFormat(dateLocale).format(Math.round(n));
   const [debtors, setDebtors] = useState<Debtor[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -85,9 +85,9 @@ export default function DebtorsPage() {
   const debtorCount = debtors.length;
 
   const FILTERS: { key: Filter; label: string }[] = [
-    { key: "all", label: "All Debtors" },
-    { key: "7days", label: "Overdue > 7 days" },
-    { key: "30days", label: "Overdue > 30 days" },
+    { key: "all", label: t.debtors.allDebtors },
+    { key: "7days", label: t.debtors.overdue7 },
+    { key: "30days", label: t.debtors.overdue30 },
   ];
 
   return (
@@ -96,10 +96,8 @@ export default function DebtorsPage() {
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Debtors</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              Students with outstanding monthly fee balances (current & previous month).
-            </p>
+            <h1 className="text-2xl font-bold text-gray-900">{t.debtors.title}</h1>
+            <p className="mt-1 text-sm text-gray-500">{t.debtors.subtitle}</p>
           </div>
           <button
             onClick={fetchDebtors}
@@ -111,7 +109,7 @@ export default function DebtorsPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
               </svg>
             )}
-            Refresh
+            {t.common.refresh}
           </button>
         </div>
 
@@ -125,7 +123,7 @@ export default function DebtorsPage() {
                 </svg>
               </div>
               <div>
-                <p className="text-sm text-gray-500 font-medium">Number of Debtors</p>
+                <p className="text-sm text-gray-500 font-medium">{t.debtors.numberOfDebtors}</p>
                 {loading ? (
                   <div className="mt-1 h-7 w-12 rounded bg-gray-200 animate-pulse" />
                 ) : (
@@ -143,7 +141,7 @@ export default function DebtorsPage() {
                 </svg>
               </div>
               <div>
-                <p className="text-sm text-gray-500 font-medium">Total Debt Amount</p>
+                <p className="text-sm text-gray-500 font-medium">{t.debtors.totalDebtAmount}</p>
                 {loading ? (
                   <div className="mt-1 h-7 w-32 rounded bg-gray-200 animate-pulse" />
                 ) : (
@@ -189,7 +187,7 @@ export default function DebtorsPage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
             </svg>
             <span className="text-sm text-red-700">{error}</span>
-            <button onClick={fetchDebtors} className="ml-auto text-sm font-medium text-red-700 underline hover:no-underline">Retry</button>
+            <button onClick={fetchDebtors} className="ml-auto text-sm font-medium text-red-700 underline hover:no-underline">{t.common.retry}</button>
           </div>
         )}
 
@@ -197,11 +195,11 @@ export default function DebtorsPage() {
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
             <h2 className="text-base font-semibold text-gray-900">
-              {filter === "all" ? "All Debtors" : filter === "7days" ? "Overdue More Than 7 Days" : "Overdue More Than 30 Days"}
+              {filter === "all" ? t.debtors.allDebtors : filter === "7days" ? t.debtors.overdueMore7 : t.debtors.overdueMore30}
             </h2>
             {!loading && (
               <span className="text-sm text-gray-400">
-                {filtered.length} student{filtered.length !== 1 ? "s" : ""}
+                {filtered.length} {filtered.length !== 1 ? t.common.students : t.common.student}
               </span>
             )}
           </div>
@@ -211,7 +209,7 @@ export default function DebtorsPage() {
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 border-b border-gray-100">
                   <tr>
-                    {["Student Name", "Phone", "Group", "Monthly Fee", "Amount Paid", "Remaining Debt", "Days Overdue"].map((h) => (
+                    {[t.debtors.studentName, t.students.phone, t.debtors.group, t.debtors.monthlyFee, t.debtors.amountPaid, t.debtors.remainingDebt, t.debtors.daysOverdue].map((h) => (
                       <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
                     ))}
                   </tr>
@@ -229,20 +227,16 @@ export default function DebtorsPage() {
                 </svg>
               </div>
               <p className="text-sm font-medium text-gray-700">
-                {filter === "all"
-                  ? "No debtors found — all students are up to date!"
-                  : `No students match the "${filter === "7days" ? ">7 days" : ">30 days"}" filter.`}
+                {filter === "all" ? t.debtors.noDebtors : t.debtors.noStudentsMatch}
               </p>
-              <p className="text-xs text-gray-400 mt-1">
-                Make sure groups have a monthly fee set in the Groups page.
-              </p>
+              <p className="text-xs text-gray-400 mt-1">{t.debtors.setFeeHint}</p>
             </div>
           ) : !error ? (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 border-b border-gray-100">
                   <tr>
-                    {["Student Name", "Phone", "Group", "Monthly Fee", "Amount Paid", "Remaining Debt", "Days Overdue"].map((h) => (
+                    {[t.debtors.studentName, t.students.phone, t.debtors.group, t.debtors.monthlyFee, t.debtors.amountPaid, t.debtors.remainingDebt, t.debtors.daysOverdue].map((h) => (
                       <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
                     ))}
                   </tr>
@@ -278,15 +272,15 @@ export default function DebtorsPage() {
 
               {/* Summary row */}
               <div className="border-t border-gray-200 bg-gray-50 px-4 py-3 flex flex-wrap items-center gap-6">
-                <span className="text-xs text-gray-500 font-medium uppercase tracking-wide">Totals for filtered view</span>
+                <span className="text-xs text-gray-500 font-medium uppercase tracking-wide">{t.debtors.filteredTotals}</span>
                 <span className="text-sm text-gray-700">
-                  <span className="font-semibold">{filtered.length}</span> students
+                  <span className="font-semibold">{filtered.length}</span> {filtered.length !== 1 ? t.common.students : t.common.student}
                 </span>
                 <span className="text-sm text-gray-700">
-                  Paid: <span className="font-semibold text-emerald-600">{fmt(filtered.reduce((s, d) => s + d.amountPaid, 0))} UZS</span>
+                  {t.debtors.paid} <span className="font-semibold text-emerald-600">{fmt(filtered.reduce((s, d) => s + d.amountPaid, 0))} UZS</span>
                 </span>
                 <span className="text-sm text-gray-700">
-                  Remaining: <span className="font-semibold text-red-600">{fmt(filtered.reduce((s, d) => s + d.remainingDebt, 0))} UZS</span>
+                  {t.debtors.remaining} <span className="font-semibold text-red-600">{fmt(filtered.reduce((s, d) => s + d.remainingDebt, 0))} UZS</span>
                 </span>
               </div>
             </div>

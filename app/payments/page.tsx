@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 
 type Student = { id: string; fullName: string; phone: string; groupId: string | null };
 
@@ -22,20 +23,20 @@ function todayISO() {
   return new Date().toISOString().slice(0, 10);
 }
 
-function formatAmount(n: number) {
-  return new Intl.NumberFormat("en-US").format(n) + " UZS";
+function formatAmount(n: number, locale: string) {
+  return new Intl.NumberFormat(locale).format(n) + " UZS";
 }
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-GB", {
+function formatDate(iso: string, locale: string) {
+  return new Date(iso).toLocaleDateString(locale, {
     day: "2-digit",
     month: "short",
     year: "numeric",
   });
 }
 
-function formatMonth(month: number, year: number) {
-  return new Date(year, month - 1, 1).toLocaleDateString("en-US", {
+function formatMonth(month: number, year: number, locale: string) {
+  return new Date(year, month - 1, 1).toLocaleDateString(locale, {
     month: "long",
     year: "numeric",
   });
@@ -46,22 +47,20 @@ function currentMonthYear() {
   return `${d.getMonth() + 1}-${d.getFullYear()}`;
 }
 
-function getMonthOptions() {
+function getMonthOptions(locale: string) {
   const opts: { value: string; label: string; month: number; year: number }[] = [];
   const now = new Date();
   for (let offset = -2; offset <= 12; offset++) {
     const d = new Date(now.getFullYear(), now.getMonth() - offset, 1);
     opts.push({
       value: `${d.getMonth() + 1}-${d.getFullYear()}`,
-      label: d.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+      label: d.toLocaleDateString(locale, { month: "long", year: "numeric" }),
       month: d.getMonth() + 1,
       year: d.getFullYear(),
     });
   }
   return opts;
 }
-
-const MONTH_OPTIONS = getMonthOptions();
 
 function parseMonthYear(value: string): { month: number; year: number } {
   const [m, y] = value.split("-");
@@ -123,11 +122,14 @@ function StudentProfileCard({
   student,
   payments,
   loading,
+  dateLocale,
 }: {
   student: Student | undefined;
   payments: Payment[];
   loading: boolean;
+  dateLocale: string;
 }) {
+  const { t } = useTranslation();
   if (!student) return null;
   const total = payments.reduce((s, p) => s + p.amount, 0);
   const last = payments[0];
@@ -147,32 +149,32 @@ function StudentProfileCard({
       <div className="p-5 space-y-4">
         {loading ? (
           <div className="flex items-center gap-2 text-gray-400 text-sm">
-            <Spinner /> Loading…
+            <Spinner /> {t.common.loading}
           </div>
         ) : (
           <>
             <div className="grid grid-cols-3 gap-3 text-center">
               <div className="rounded-lg bg-emerald-50 border border-emerald-100 py-3">
                 <p className="text-lg font-bold text-emerald-900">
-                  {new Intl.NumberFormat("en-US").format(total)}
+                  {new Intl.NumberFormat(dateLocale).format(total)}
                 </p>
-                <p className="text-xs text-emerald-600 mt-0.5">Total (UZS)</p>
+                <p className="text-xs text-emerald-600 mt-0.5">{t.payments.totalPaid}</p>
               </div>
               <div className="rounded-lg bg-blue-50 border border-blue-100 py-3">
                 <p className="text-lg font-bold text-blue-900">{payments.length}</p>
-                <p className="text-xs text-blue-600 mt-0.5">Payments</p>
+                <p className="text-xs text-blue-600 mt-0.5">{t.payments.paymentHistory}</p>
               </div>
               <div className="rounded-lg bg-gray-50 border border-gray-100 py-3">
                 <p className="text-sm font-bold text-gray-900 leading-tight">
-                  {last ? formatDate(last.paymentDate) : "—"}
+                  {last ? formatDate(last.paymentDate, dateLocale) : "—"}
                 </p>
-                <p className="text-xs text-gray-500 mt-0.5">Last Paid</p>
+                <p className="text-xs text-gray-500 mt-0.5">{t.payments.lastPaid}</p>
               </div>
             </div>
             {monthsPaid.length > 0 && (
               <div>
                 <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
-                  Months Paid
+                  {t.payments.monthsPaid}
                 </p>
                 <div className="flex flex-wrap gap-1.5">
                   {monthsPaid.map((mv) => {
@@ -182,7 +184,7 @@ function StudentProfileCard({
                         key={mv}
                         className="inline-flex items-center rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 text-xs font-medium text-emerald-700"
                       >
-                        {new Date(year, month - 1, 1).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
+                        {new Date(year, month - 1, 1).toLocaleDateString(dateLocale, { month: "short", year: "numeric" })}
                       </span>
                     );
                   })}
@@ -199,6 +201,8 @@ function StudentProfileCard({
 // ── Main Page ────────────────────────────────────────────────────────────────
 
 export default function PaymentsPage() {
+  const { t, dateLocale } = useTranslation();
+  const MONTH_OPTIONS = getMonthOptions(dateLocale);
   const [activeTab, setActiveTab] = useState<"add" | "history">("add");
   const [students, setStudents] = useState<Student[]>([]);
   const [studentsLoading, setStudentsLoading] = useState(true);
@@ -411,10 +415,8 @@ export default function PaymentsPage() {
 
           {/* Header */}
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Payments</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              Record and manage student tuition payments.
-            </p>
+            <h1 className="text-2xl font-bold text-gray-900">{t.payments.title}</h1>
+            <p className="mt-1 text-sm text-gray-500">{t.payments.subtitle}</p>
           </div>
 
           {/* Tabs */}
@@ -430,7 +432,7 @@ export default function PaymentsPage() {
                       : "border-transparent text-gray-500 hover:text-gray-700"
                   }`}
                 >
-                  {tab === "add" ? "Add Payment" : "History"}
+                  {tab === "add" ? t.payments.addPayment : t.payments.paymentHistory}
                 </button>
               ))}
             </nav>
@@ -443,12 +445,12 @@ export default function PaymentsPage() {
               <div className="lg:col-span-3">
                 <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
                   <h2 className="text-base font-semibold text-gray-900 mb-5">
-                    Record New Payment
+                    {t.payments.recordNewPayment}
                   </h2>
                   <form onSubmit={handleAdd} className="space-y-4">
                     <div>
                       <label className={labelCls}>
-                        Student <span className="text-red-500">*</span>
+                        {t.students.fullName} <span className="text-red-500">*</span>
                       </label>
                       <select
                         value={formStudentId}
@@ -457,7 +459,7 @@ export default function PaymentsPage() {
                         disabled={studentsLoading}
                         className={selectCls}
                       >
-                        <option value="">— Select a student —</option>
+                        <option value="">{t.payments.selectStudent}</option>
                         {students.map((s) => (
                           <option key={s.id} value={s.id}>
                             {s.fullName}
@@ -469,13 +471,13 @@ export default function PaymentsPage() {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className={labelCls}>
-                          Amount (UZS) <span className="text-red-500">*</span>
+                          {t.payments.amount} <span className="text-red-500">*</span>
                         </label>
                         <input
                           type="number"
                           min="0"
                           step="any"
-                          placeholder="e.g. 500000"
+                          placeholder={t.payments.amountPlaceholder}
                           value={formAmount}
                           onChange={(e) => setFormAmount(e.target.value)}
                           required
@@ -483,7 +485,7 @@ export default function PaymentsPage() {
                         />
                       </div>
                       <div>
-                        <label className={labelCls}>Payment Date</label>
+                        <label className={labelCls}>{t.payments.paymentDate}</label>
                         <input
                           type="date"
                           value={formDate}
@@ -495,7 +497,7 @@ export default function PaymentsPage() {
                     </div>
 
                     <div>
-                      <label className={labelCls}>Payment for Month</label>
+                      <label className={labelCls}>{t.payments.paymentForMonth}</label>
                       <select
                         value={formMonthYear}
                         onChange={(e) => setFormMonthYear(e.target.value)}
@@ -511,12 +513,12 @@ export default function PaymentsPage() {
 
                     <div>
                       <label className={labelCls}>
-                        Note{" "}
-                        <span className="text-gray-400 font-normal">(optional)</span>
+                        {t.payments.note}{" "}
+                        <span className="text-gray-400 font-normal">({t.payments.optionalNote})</span>
                       </label>
                       <input
                         type="text"
-                        placeholder="e.g. June tuition, partial payment…"
+                        placeholder={t.payments.notePlaceholder}
                         value={formNote}
                         onChange={(e) => setFormNote(e.target.value)}
                         className={inputCls}
@@ -530,14 +532,14 @@ export default function PaymentsPage() {
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
                         </svg>
-                        Payment recorded successfully!
+                        {t.payments.paymentRecorded}
                       </div>
                     )}
 
                     <div className="flex justify-end pt-1">
                       <button type="submit" disabled={adding} className={primaryBtnCls}>
                         {adding && <Spinner />}
-                        {adding ? "Saving…" : "Add Payment"}
+                        {adding ? t.common.saving : t.payments.addPayment}
                       </button>
                     </div>
                   </form>
@@ -551,6 +553,7 @@ export default function PaymentsPage() {
                     student={formStudent}
                     payments={studentPayments}
                     loading={summaryLoading}
+                    dateLocale={dateLocale}
                   />
                 ) : (
                   <div className="bg-white rounded-xl border border-dashed border-gray-300 flex flex-col items-center justify-center py-14 text-gray-400">
@@ -558,7 +561,7 @@ export default function PaymentsPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
                     </svg>
                     <p className="text-sm text-center px-4">
-                      Select a student to see their payment history.
+                      {t.payments.selectStudentPrompt}
                     </p>
                   </div>
                 )}
@@ -574,14 +577,14 @@ export default function PaymentsPage() {
                 <div className="flex flex-wrap gap-4 items-end">
                   <div className="flex-1 min-w-48">
                     <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">
-                      Student
+                      {t.students.fullName}
                     </label>
                     <select
                       value={histStudentId}
                       onChange={(e) => setHistStudentId(e.target.value)}
                       className={selectCls}
                     >
-                      <option value="">All Students</option>
+                      <option value="">{t.payments.allStudents}</option>
                       {students.map((s) => (
                         <option key={s.id} value={s.id}>
                           {s.fullName}
@@ -591,14 +594,14 @@ export default function PaymentsPage() {
                   </div>
                   <div className="flex-1 min-w-48">
                     <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">
-                      Month
+                      {t.payments.paymentForMonth}
                     </label>
                     <select
                       value={histMonthYear}
                       onChange={(e) => setHistMonthYear(e.target.value)}
                       className={selectCls}
                     >
-                      <option value="">All Months</option>
+                      <option value="">{t.payments.allMonths}</option>
                       {MONTH_OPTIONS.map((o) => (
                         <option key={o.value} value={o.value}>
                           {o.label}
@@ -616,7 +619,7 @@ export default function PaymentsPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
                       </svg>
                     )}
-                    Refresh
+                    {t.common.refresh}
                   </button>
                 </div>
               </div>
@@ -627,18 +630,19 @@ export default function PaymentsPage() {
                   student={histStudent}
                   payments={histRecords}
                   loading={histLoading}
+                  dateLocale={dateLocale}
                 />
               )}
 
               {/* Table */}
               <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
                 <div className="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between flex-wrap gap-3">
-                  <h2 className="text-sm font-semibold text-gray-900">Payment Records</h2>
+                  <h2 className="text-sm font-semibold text-gray-900">{t.payments.paymentRecords}</h2>
                   {!histLoading && histRecords.length > 0 && (
                     <div className="flex items-center gap-4 text-sm text-gray-500">
-                      <span>{histRecords.length} record{histRecords.length !== 1 ? "s" : ""}</span>
+                      <span>{histRecords.length} {t.common.records}</span>
                       <span className="font-semibold text-emerald-700">
-                        {formatAmount(histTotal)}
+                        {formatAmount(histTotal, dateLocale)}
                       </span>
                     </div>
                   )}
@@ -649,21 +653,21 @@ export default function PaymentsPage() {
                 {histLoading ? (
                   <div className="flex items-center justify-center gap-2 py-14 text-gray-400">
                     <Spinner size="md" />
-                    <span className="text-sm">Loading payments…</span>
+                    <span className="text-sm">{t.payments.loadingPayments}</span>
                   </div>
                 ) : histRecords.length === 0 && !histError ? (
                   <div className="flex flex-col items-center justify-center py-14 text-gray-400">
                     <svg className="w-9 h-9 mb-3 text-gray-300" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z" />
                     </svg>
-                    <p className="text-sm">No payment records found.</p>
+                    <p className="text-sm">{t.payments.noPayments}</p>
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead className="bg-gray-50 border-b border-gray-100">
                         <tr>
-                          {["Student", "Amount", "Month", "Date", "Note", "Actions"].map((h) => (
+                          {[t.students.fullName, t.payments.amount, t.payments.paymentForMonth, t.common.date, t.payments.note, t.common.actions].map((h) => (
                             <th
                               key={h}
                               className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide"
@@ -680,13 +684,13 @@ export default function PaymentsPage() {
                               {record.student.fullName}
                             </td>
                             <td className="px-4 py-3 font-semibold text-emerald-700">
-                              {formatAmount(record.amount)}
+                              {formatAmount(record.amount, dateLocale)}
                             </td>
                             <td className="px-4 py-3 text-gray-500">
-                              {formatMonth(record.month, record.year)}
+                              {formatMonth(record.month, record.year, dateLocale)}
                             </td>
                             <td className="px-4 py-3 text-gray-500">
-                              {formatDate(record.paymentDate)}
+                              {formatDate(record.paymentDate, dateLocale)}
                             </td>
                             <td className="px-4 py-3 text-gray-400 max-w-xs truncate">
                               {record.note ?? <span className="italic text-gray-300">—</span>}
@@ -694,7 +698,7 @@ export default function PaymentsPage() {
                             <td className="px-4 py-3">
                               {deletingId === record.id ? (
                                 <span className="flex items-center gap-1 text-gray-400 text-xs">
-                                  <Spinner /> Deleting…
+                                  <Spinner /> {t.common.deleting}
                                 </span>
                               ) : (
                                 <div className="flex items-center gap-2">
@@ -702,13 +706,13 @@ export default function PaymentsPage() {
                                     onClick={() => openEdit(record)}
                                     className="inline-flex items-center rounded border border-gray-200 px-2.5 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors"
                                   >
-                                    Edit
+                                    {t.common.edit}
                                   </button>
                                   <button
                                     onClick={() => setDeleteConfirmId(record.id)}
                                     className="inline-flex items-center rounded border border-red-200 px-2.5 py-1 text-xs font-medium text-red-600 hover:bg-red-50 transition-colors"
                                   >
-                                    Delete
+                                    {t.common.delete}
                                   </button>
                                 </div>
                               )}
@@ -731,7 +735,7 @@ export default function PaymentsPage() {
           <ModalCard onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-5">
               <div>
-                <h2 className="text-base font-semibold text-gray-900">Edit Payment</h2>
+                <h2 className="text-base font-semibold text-gray-900">{t.payments.editPayment}</h2>
                 <p className="text-xs text-gray-500 mt-0.5">{editingPayment.student.fullName}</p>
               </div>
               <button
@@ -746,7 +750,7 @@ export default function PaymentsPage() {
             <form onSubmit={handleSaveEdit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className={labelCls}>Amount (UZS)</label>
+                  <label className={labelCls}>{t.payments.amount}</label>
                   <input
                     type="number"
                     min="0"
@@ -759,7 +763,7 @@ export default function PaymentsPage() {
                   />
                 </div>
                 <div>
-                  <label className={labelCls}>Payment Date</label>
+                  <label className={labelCls}>{t.payments.paymentDate}</label>
                   <input
                     type="date"
                     value={editDate}
@@ -770,7 +774,7 @@ export default function PaymentsPage() {
                 </div>
               </div>
               <div>
-                <label className={labelCls}>Payment for Month</label>
+                <label className={labelCls}>{t.payments.paymentForMonth}</label>
                 <select
                   value={editMonthYear}
                   onChange={(e) => setEditMonthYear(e.target.value)}
@@ -784,23 +788,23 @@ export default function PaymentsPage() {
                 </select>
               </div>
               <div>
-                <label className={labelCls}>Note</label>
+                <label className={labelCls}>{t.payments.note}</label>
                 <input
                   type="text"
                   value={editNote}
                   onChange={(e) => setEditNote(e.target.value)}
-                  placeholder="Optional note"
+                  placeholder={t.payments.optionalNote}
                   className={inputCls}
                 />
               </div>
               {editError && <ErrorPill message={editError} />}
               <div className="flex justify-end gap-3 pt-1">
                 <button type="button" onClick={closeEdit} className={ghostBtnCls}>
-                  Cancel
+                  {t.common.cancel}
                 </button>
                 <button type="submit" disabled={editSaving} className={primaryBtnCls}>
                   {editSaving && <Spinner />}
-                  {editSaving ? "Saving…" : "Save Changes"}
+                  {editSaving ? t.common.saving : t.common.saveChanges}
                 </button>
               </div>
             </form>
@@ -819,24 +823,24 @@ export default function PaymentsPage() {
                 </svg>
               </div>
               <div>
-                <h2 className="text-base font-semibold text-gray-900">Delete payment?</h2>
+                <h2 className="text-base font-semibold text-gray-900">{t.payments.deletePayment}</h2>
                 <p className="mt-1 text-sm text-gray-500">
-                  <span className="font-medium text-gray-700">{formatAmount(deletePayment.amount)}</span>
-                  {" "}for{" "}
+                  <span className="font-medium text-gray-700">{formatAmount(deletePayment.amount, dateLocale)}</span>
+                  {" — "}
                   <span className="font-medium text-gray-700">{deletePayment.student.fullName}</span>
-                  {" "}({formatMonth(deletePayment.month, deletePayment.year)}) will be permanently removed.
+                  {" "}({formatMonth(deletePayment.month, deletePayment.year, dateLocale)}) {t.payments.deleteConfirm}
                 </p>
               </div>
             </div>
             <div className="flex justify-end gap-3 mt-6">
               <button onClick={() => setDeleteConfirmId(null)} className={ghostBtnCls}>
-                Cancel
+                {t.common.cancel}
               </button>
               <button
                 onClick={() => handleDelete(deleteConfirmId)}
                 className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors"
               >
-                Delete Payment
+                {t.payments.deletePayment}
               </button>
             </div>
           </ModalCard>

@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import Sidebar from "@/app/components/Sidebar";
+import { LanguageSwitcher } from "@/app/components/LanguageSwitcher";
 
 type SessionUser = {
   fullName: string;
@@ -49,6 +50,9 @@ export default function AppShell({
               O
             </div>
             <span className="text-sm font-semibold text-gray-900">O&apos;quv Markaz</span>
+          </div>
+          <div className="ml-auto">
+            <LanguageSwitcher />
           </div>
         </header>
 
