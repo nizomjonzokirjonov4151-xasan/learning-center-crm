@@ -5,11 +5,14 @@ import { decrypt, SESSION_COOKIE } from "@/lib/session";
 const PUBLIC_ROUTES = ["/login", "/setup"];
 
 // Routes blocked per role (ADMIN bypasses all restrictions)
-const BLOCKED_FOR_MANAGER = ["/teachers", "/schedules", "/telegram", "/users"];
+const BLOCKED_FOR_MANAGER = ["/teachers", "/schedules", "/telegram", "/users", "/parents"];
 const BLOCKED_FOR_TEACHER = [
   "/students", "/payments", "/teachers", "/telegram",
-  "/debtors", "/users", "/analytics", "/reports",
+  "/debtors", "/users", "/analytics", "/reports", "/parents",
 ];
+
+// PARENT can only access these prefixes (everything else redirects to /parent/dashboard)
+const ALLOWED_FOR_PARENT = ["/parent", "/profile"];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -30,9 +33,10 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // Authenticated users visiting /login → go home
+  // Authenticated users visiting /login → send to appropriate home
   if (pathname === "/login") {
-    return NextResponse.redirect(new URL("/", request.nextUrl));
+    const home = session.role === "PARENT" ? "/parent/dashboard" : "/";
+    return NextResponse.redirect(new URL(home, request.nextUrl));
   }
 
   // Force password change: lock user to the security page until they comply
@@ -40,7 +44,21 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/profile/security", request.nextUrl));
   }
 
-  // Role-based page access
+  // ── PARENT: whitelist-only access ──────────────────────────────────────────
+  if (session.role === "PARENT") {
+    const allowed = ALLOWED_FOR_PARENT.some((r) => pathname.startsWith(r));
+    if (!allowed) {
+      return NextResponse.redirect(new URL("/parent/dashboard", request.nextUrl));
+    }
+    return NextResponse.next();
+  }
+
+  // ── Non-PARENT: block access to /parent/* ──────────────────────────────────
+  if (pathname.startsWith("/parent")) {
+    return NextResponse.redirect(new URL("/", request.nextUrl));
+  }
+
+  // Role-based page access for staff
   if (session.role === "MANAGER") {
     if (BLOCKED_FOR_MANAGER.some((r) => pathname.startsWith(r))) {
       return NextResponse.redirect(new URL("/", request.nextUrl));

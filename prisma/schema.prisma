@@ -17,6 +17,7 @@ enum UserRole {
   ADMIN
   MANAGER
   TEACHER
+  PARENT
 }
 
 model User {
@@ -32,6 +33,19 @@ model User {
   teacher             Teacher?        @relation(fields: [teacherId], references: [id], onDelete: SetNull)
   loginActivities     LoginActivity[]
   userSessions        UserSession[]
+  parent              Parent?
+}
+
+model Parent {
+  id        String    @id @default(cuid())
+  fullName  String
+  phone     String
+  email     String    @unique
+  userId    String    @unique
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  students  Student[]
 }
 
 model UserSession {
@@ -73,6 +87,8 @@ model Student {
   createdAt   DateTime     @default(now())
   groupId     String?
   group       Group?       @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  parentId    String?
+  parent      Parent?      @relation(fields: [parentId], references: [id], onDelete: SetNull)
   attendances Attendance[]
   payments    Payment[]
 }

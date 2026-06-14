@@ -72,6 +72,8 @@ export type Translations = {
     users: string
     security: string
     sessions: string
+    parents: string
+    profile: string
     signOut: string
     crmSystem: string
   }
@@ -505,6 +507,104 @@ export type Translations = {
     minutesAgo: string
     hoursAgo: string
     daysAgo: string
+  }
+  parents: {
+    title: string
+    subtitle: string
+    total: string
+    active: string
+    createParent: string
+    editParent: string
+    deleteParent: string
+    allParents: string
+    searchPlaceholder: string
+    loading: string
+    noParents: string
+    noParentsMatch: string
+    nameColumn: string
+    contactColumn: string
+    studentsColumn: string
+    statusColumn: string
+    joined: string
+    statusActive: string
+    statusInactive: string
+    fullName: string
+    fullNamePlaceholder: string
+    emailPlaceholder: string
+    phonePlaceholder: string
+    tempPassword: string
+    minChars: string
+    linkedStudents: string
+    noLinkedStudents: string
+    selectStudents: string
+    deleteConfirm: string
+    creating: string
+    newPassword: string
+    resetPassword: string
+    activate: string
+    deactivate: string
+    noStudentsAvailable: string
+  }
+  parentPortal: {
+    portalName: string
+    parentLabel: string
+    myChildren: string
+    selectChild: string
+    allChildren: string
+    noChildren: string
+    group: string
+    teacher: string
+    enrolledDate: string
+    room: string
+    currency: string
+    dashTitle: string
+    dashSubtitle: string
+    totalChildren: string
+    attendanceRate: string
+    currentDebt: string
+    activeGroups: string
+    todaysClasses: string
+    noClassesToday: string
+    upcomingClasses: string
+    noUpcoming: string
+    attTitle: string
+    attSubtitle: string
+    date: string
+    status: string
+    present: string
+    absent: string
+    late: string
+    statistics: string
+    rate: string
+    presentCount: string
+    absentCount: string
+    lateCount: string
+    noAttendance: string
+    payTitle: string
+    paySubtitle: string
+    paymentHistory: string
+    amount: string
+    period: string
+    totalPaid: string
+    remainingDebt: string
+    monthlyFee: string
+    noPayments: string
+    schTitle: string
+    schSubtitle: string
+    weeklySchedule: string
+    noSchedule: string
+    monday: string
+    tuesday: string
+    wednesday: string
+    thursday: string
+    friday: string
+    saturday: string
+    sunday: string
+    profTitle: string
+    profSubtitle: string
+    personalInfo: string
+    phone: string
+    memberSince: string
   }
 }
 
