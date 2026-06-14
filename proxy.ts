@@ -46,7 +46,7 @@ export async function proxy(request: NextRequest) {
 
   // ── PARENT: whitelist-only access ──────────────────────────────────────────
   if (session.role === "PARENT") {
-    const allowed = ALLOWED_FOR_PARENT.some((r) => pathname.startsWith(r));
+    const allowed = ALLOWED_FOR_PARENT.some((r) => pathname === r || pathname.startsWith(r + "/"));
     if (!allowed) {
       return NextResponse.redirect(new URL("/parent/dashboard", request.nextUrl));
     }
@@ -54,7 +54,7 @@ export async function proxy(request: NextRequest) {
   }
 
   // ── Non-PARENT: block access to /parent/* ──────────────────────────────────
-  if (pathname.startsWith("/parent")) {
+  if (pathname === "/parent" || pathname.startsWith("/parent/")) {
     return NextResponse.redirect(new URL("/", request.nextUrl));
   }
 
