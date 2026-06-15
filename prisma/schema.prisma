@@ -70,14 +70,17 @@ model LoginActivity {
 }
 
 model Group {
-  id          String       @id @default(cuid())
-  name        String
-  description String?
-  monthlyFee  Float        @default(0)
-  createdAt   DateTime     @default(now())
-  students    Student[]
-  attendances Attendance[]
-  schedules   Schedule[]
+  id             String       @id @default(cuid())
+  name           String
+  description    String?
+  monthlyFee     Float        @default(0)
+  teacherPercent Float        @default(40)
+  teacherId      String?
+  teacher        Teacher?     @relation(fields: [teacherId], references: [id], onDelete: SetNull)
+  createdAt      DateTime     @default(now())
+  students       Student[]
+  attendances    Attendance[]
+  schedules      Schedule[]
 }
 
 model Student {
@@ -126,6 +129,7 @@ model Teacher {
   salary    Float
   isActive  Boolean    @default(true)
   createdAt DateTime   @default(now())
+  groups    Group[]
   schedules Schedule[]
   user      User?
 }

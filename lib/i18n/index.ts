@@ -139,6 +139,10 @@ export type Translations = {
     addStudent: string
     fullName: string
     phone: string
+    groupLabel: string
+    groupPlaceholder: string
+    teacherLabel: string
+    noGroup: string
     createdAt: string
     searchPlaceholder: string
     allStudents: string
@@ -160,6 +164,12 @@ export type Translations = {
     descriptionPlaceholder: string
     monthlyFee: string
     feePlaceholder: string
+    teacherLabel: string
+    teacherPlaceholder: string
+    noTeacher: string
+    commissionLabel: string
+    commissionPlaceholder: string
+    commissionHint: string
     studentsCount: string
     createdAt: string
     adding: string
@@ -467,6 +477,15 @@ export type Translations = {
     quickActions: string
     recordAttendance: string
     viewMyGroups: string
+    myEarnings: string
+    revenueThisMonth: string
+    expectedSalary: string
+    commissionRate: string
+    groupBreakdown: string
+    revenue: string
+    commission: string
+    earnedSalary: string
+    noRevenue: string
   }
   security: {
     title: string

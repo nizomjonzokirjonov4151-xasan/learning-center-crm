@@ -3,11 +3,16 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 
+type TeacherOption = { id: string; fullName: string; subject: string };
+
 type Group = {
   id: string;
   name: string;
   description: string | null;
   monthlyFee: number;
+  teacherPercent: number;
+  teacherId: string | null;
+  teacher: { id: string; fullName: string; subject: string } | null;
   createdAt: string;
   _count: { students: number };
 };
@@ -38,24 +43,9 @@ function ErrorPill({ message }: { message: string }) {
 
 function Spinner() {
   return (
-    <svg
-      className="animate-spin h-4 w-4"
-      fill="none"
-      viewBox="0 0 24 24"
-    >
-      <circle
-        className="opacity-25"
-        cx="12"
-        cy="12"
-        r="10"
-        stroke="currentColor"
-        strokeWidth="4"
-      />
-      <path
-        className="opacity-75"
-        fill="currentColor"
-        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-      />
+    <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
     </svg>
   );
 }
@@ -73,47 +63,31 @@ function Backdrop({ onClick, children }: { onClick: () => void; children: React.
 
 function ModalCard({ children, onClick }: { children: React.ReactNode; onClick?: (e: React.MouseEvent) => void }) {
   return (
-    <div
-      className="bg-white rounded-xl shadow-xl w-full max-w-md p-6"
-      onClick={onClick}
-    >
+    <div className="bg-white rounded-xl shadow-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto" onClick={onClick}>
       {children}
     </div>
   );
 }
 
 function formatDate(iso: string, locale: string) {
-  return new Date(iso).toLocaleDateString(locale, {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
+  return new Date(iso).toLocaleDateString(locale, { day: "2-digit", month: "short", year: "numeric" });
 }
 
-function StudentBadge({ count, label }: { count: number; label: string }) {
-  return (
-    <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700 border border-blue-100">
-      {count} {label}
-    </span>
-  );
-}
+const EMPTY_FORM = { name: "", description: "", monthlyFee: "", teacherId: "", teacherPercent: "40" };
 
 export default function GroupsPage() {
   const { t, dateLocale } = useTranslation();
   const [groups, setGroups] = useState<Group[]>([]);
+  const [teachers, setTeachers] = useState<TeacherOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [newName, setNewName] = useState("");
-  const [newDescription, setNewDescription] = useState("");
-  const [newMonthlyFee, setNewMonthlyFee] = useState("");
+  const [form, setForm] = useState(EMPTY_FORM);
   const [adding, setAdding] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
 
   const [editingGroup, setEditingGroup] = useState<Group | null>(null);
-  const [editName, setEditName] = useState("");
-  const [editDescription, setEditDescription] = useState("");
-  const [editMonthlyFee, setEditMonthlyFee] = useState("");
+  const [editForm, setEditForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
 
@@ -124,19 +98,18 @@ export default function GroupsPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/groups");
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      setGroups(await res.json());
+      const [gRes, tRes] = await Promise.all([fetch("/api/groups"), fetch("/api/teachers")]);
+      if (!gRes.ok) throw new Error(`HTTP ${gRes.status}`);
+      setGroups(await gRes.json());
+      if (tRes.ok) setTeachers(await tRes.json());
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load groups");
+      setError(e instanceof Error ? e.message : "Failed to load");
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => {
-    fetchGroups();
-  }, [fetchGroups]);
+  useEffect(() => { fetchGroups(); }, [fetchGroups]);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -150,7 +123,7 @@ export default function GroupsPage() {
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
-    if (!newName.trim()) return;
+    if (!form.name.trim()) return;
     setAdding(true);
     setAddError(null);
     try {
@@ -158,18 +131,18 @@ export default function GroupsPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: newName.trim(),
-          description: newDescription.trim() || null,
-          monthlyFee: newMonthlyFee ? parseFloat(newMonthlyFee) : 0,
+          name: form.name.trim(),
+          description: form.description.trim() || null,
+          monthlyFee: form.monthlyFee ? parseFloat(form.monthlyFee) : 0,
+          teacherId: form.teacherId || null,
+          teacherPercent: form.teacherPercent ? parseFloat(form.teacherPercent) : 40,
         }),
       });
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.detail ?? data.error ?? `HTTP ${res.status}`);
       }
-      setNewName("");
-      setNewDescription("");
-      setNewMonthlyFee("");
+      setForm(EMPTY_FORM);
       await fetchGroups();
     } catch (e) {
       setAddError(e instanceof Error ? e.message : "Failed to create group");
@@ -180,9 +153,13 @@ export default function GroupsPage() {
 
   function openEdit(group: Group) {
     setEditingGroup(group);
-    setEditName(group.name);
-    setEditDescription(group.description ?? "");
-    setEditMonthlyFee(group.monthlyFee > 0 ? String(group.monthlyFee) : "");
+    setEditForm({
+      name: group.name,
+      description: group.description ?? "",
+      monthlyFee: group.monthlyFee > 0 ? String(group.monthlyFee) : "",
+      teacherId: group.teacherId ?? "",
+      teacherPercent: String(group.teacherPercent),
+    });
     setEditError(null);
   }
 
@@ -193,7 +170,7 @@ export default function GroupsPage() {
 
   async function handleSaveEdit(e: React.FormEvent) {
     e.preventDefault();
-    if (!editingGroup || !editName.trim()) return;
+    if (!editingGroup || !editForm.name.trim()) return;
     setSaving(true);
     setEditError(null);
     try {
@@ -201,9 +178,11 @@ export default function GroupsPage() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: editName.trim(),
-          description: editDescription.trim() || null,
-          monthlyFee: editMonthlyFee ? parseFloat(editMonthlyFee) : 0,
+          name: editForm.name.trim(),
+          description: editForm.description.trim() || null,
+          monthlyFee: editForm.monthlyFee ? parseFloat(editForm.monthlyFee) : 0,
+          teacherId: editForm.teacherId || null,
+          teacherPercent: editForm.teacherPercent ? parseFloat(editForm.teacherPercent) : 40,
         }),
       });
       if (!res.ok) {
@@ -213,7 +192,7 @@ export default function GroupsPage() {
       closeEdit();
       await fetchGroups();
     } catch (e) {
-      setEditError(e instanceof Error ? e.message : "Failed to save changes");
+      setEditError(e instanceof Error ? e.message : "Failed to save");
     } finally {
       setSaving(false);
     }
@@ -231,9 +210,84 @@ export default function GroupsPage() {
     }
   }
 
-  const confirmGroup = deleteConfirmId
-    ? groups.find((g) => g.id === deleteConfirmId)
-    : null;
+  const confirmGroup = deleteConfirmId ? groups.find((g) => g.id === deleteConfirmId) : null;
+
+  function GroupFormFields({
+    values,
+    onChange,
+  }: {
+    values: typeof EMPTY_FORM;
+    onChange: (v: Partial<typeof EMPTY_FORM>) => void;
+  }) {
+    return (
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="sm:col-span-2">
+            <label className={labelCls}>{t.groups.groupName} <span className="text-red-500">*</span></label>
+            <input
+              type="text"
+              placeholder={t.groups.groupNamePlaceholder}
+              value={values.name}
+              onChange={(e) => onChange({ name: e.target.value })}
+              required
+              className={inputCls}
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <label className={labelCls}>{t.groups.descriptionLabel}</label>
+            <input
+              type="text"
+              placeholder={t.groups.descriptionPlaceholder}
+              value={values.description}
+              onChange={(e) => onChange({ description: e.target.value })}
+              className={inputCls}
+            />
+          </div>
+          <div>
+            <label className={labelCls}>{t.groups.monthlyFee}</label>
+            <input
+              type="number"
+              min="0"
+              step="1000"
+              placeholder={t.groups.feePlaceholder}
+              value={values.monthlyFee}
+              onChange={(e) => onChange({ monthlyFee: e.target.value })}
+              className={inputCls}
+            />
+          </div>
+          <div>
+            <label className={labelCls}>{t.groups.commissionLabel}</label>
+            <input
+              type="number"
+              min="0"
+              max="100"
+              step="1"
+              placeholder={t.groups.commissionPlaceholder}
+              value={values.teacherPercent}
+              onChange={(e) => onChange({ teacherPercent: e.target.value })}
+              className={inputCls}
+            />
+            <p className="mt-1 text-xs text-gray-400">{t.groups.commissionHint}</p>
+          </div>
+          <div className="sm:col-span-2">
+            <label className={labelCls}>{t.groups.teacherLabel}</label>
+            <select
+              value={values.teacherId}
+              onChange={(e) => onChange({ teacherId: e.target.value })}
+              className={inputCls}
+            >
+              <option value="">{t.groups.teacherPlaceholder}</option>
+              {teachers.map((tc) => (
+                <option key={tc.id} value={tc.id}>
+                  {tc.fullName} — {tc.subject}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -244,55 +298,11 @@ export default function GroupsPage() {
             <p className="mt-1 text-sm text-gray-500">{t.groups.subtitle}</p>
           </div>
 
+          {/* Add Group */}
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-            <h2 className="text-base font-semibold text-gray-900 mb-4">
-              {t.groups.addGroup}
-            </h2>
+            <h2 className="text-base font-semibold text-gray-900 mb-4">{t.groups.addGroup}</h2>
             <form onSubmit={handleAdd} className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                  <label htmlFor="name" className={labelCls}>
-                    {t.groups.groupName} <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    id="name"
-                    type="text"
-                    placeholder={t.groups.groupNamePlaceholder}
-                    value={newName}
-                    onChange={(e) => setNewName(e.target.value)}
-                    required
-                    className={inputCls}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="description" className={labelCls}>
-                    {t.groups.descriptionLabel}
-                  </label>
-                  <input
-                    id="description"
-                    type="text"
-                    placeholder={t.groups.descriptionPlaceholder}
-                    value={newDescription}
-                    onChange={(e) => setNewDescription(e.target.value)}
-                    className={inputCls}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="monthlyFee" className={labelCls}>
-                    {t.groups.monthlyFee}
-                  </label>
-                  <input
-                    id="monthlyFee"
-                    type="number"
-                    min="0"
-                    step="1000"
-                    placeholder={t.groups.feePlaceholder}
-                    value={newMonthlyFee}
-                    onChange={(e) => setNewMonthlyFee(e.target.value)}
-                    className={inputCls}
-                  />
-                </div>
-              </div>
+              <GroupFormFields values={form} onChange={(v) => setForm((p) => ({ ...p, ...v }))} />
               {addError && <ErrorPill message={addError} />}
               <div className="flex justify-end">
                 <button type="submit" disabled={adding} className={primaryBtnCls}>
@@ -303,30 +313,21 @@ export default function GroupsPage() {
             </form>
           </div>
 
+          {/* Groups Table */}
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
               <h2 className="text-base font-semibold text-gray-900">{t.groups.allGroups}</h2>
-              <span className="text-sm text-gray-400">
-                {!loading && groups.length}
-              </span>
+              <span className="text-sm text-gray-400">{!loading && groups.length}</span>
             </div>
 
-            {error && (
-              <div className="p-6">
-                <ErrorPill message={error} />
-              </div>
-            )}
+            {error && <div className="p-6"><ErrorPill message={error} /></div>}
 
             {loading ? (
               <div className="flex items-center justify-center py-16 text-gray-400 gap-2">
-                <Spinner />
-                <span className="text-sm">{t.common.loading}</span>
+                <Spinner /><span className="text-sm">{t.common.loading}</span>
               </div>
             ) : groups.length === 0 && !error ? (
               <div className="flex flex-col items-center justify-center py-16 text-gray-400">
-                <svg className="w-10 h-10 mb-3 text-gray-300" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v8.25A2.25 2.25 0 0 0 4.5 16.5h15a2.25 2.25 0 0 0 2.25-2.25V8.25A2.25 2.25 0 0 0 19.5 6h-5.69a1.5 1.5 0 0 1-1.06-.44Z" />
-                </svg>
                 <p className="text-sm">{t.groups.noGroups}</p>
               </div>
             ) : (
@@ -335,8 +336,9 @@ export default function GroupsPage() {
                   <thead className="bg-gray-50 border-b border-gray-100">
                     <tr>
                       <Th>{t.groups.groupName}</Th>
-                      <Th>{t.groups.descriptionLabel}</Th>
+                      <Th>{t.groups.teacherLabel}</Th>
                       <Th>{t.groups.monthlyFee}</Th>
+                      <Th>{t.groups.commissionLabel}</Th>
                       <Th>{t.groups.studentsCount}</Th>
                       <Th>{t.groups.createdAt}</Th>
                       <Th>{t.common.actions}</Th>
@@ -346,11 +348,19 @@ export default function GroupsPage() {
                     {groups.map((group) => (
                       <tr key={group.id} className="hover:bg-gray-50 transition-colors">
                         <td className="px-4 py-3 font-medium text-gray-900">
-                          {group.name}
+                          <div>{group.name}</div>
+                          {group.description && (
+                            <div className="text-xs text-gray-400 truncate max-w-xs">{group.description}</div>
+                          )}
                         </td>
-                        <td className="px-4 py-3 text-gray-500 max-w-xs truncate">
-                          {group.description ?? (
-                            <span className="text-gray-300 italic">—</span>
+                        <td className="px-4 py-3">
+                          {group.teacher ? (
+                            <div>
+                              <span className="text-sm font-medium text-gray-900">{group.teacher.fullName}</span>
+                              <span className="ml-1.5 text-xs text-gray-400">({group.teacher.subject})</span>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-gray-300 italic">{t.groups.noTeacher}</span>
                           )}
                         </td>
                         <td className="px-4 py-3 text-gray-700 whitespace-nowrap">
@@ -363,27 +373,27 @@ export default function GroupsPage() {
                           )}
                         </td>
                         <td className="px-4 py-3">
-                          <StudentBadge count={group._count.students} label={t.common.students} />
+                          <span className="inline-flex items-center rounded-full bg-violet-50 border border-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700">
+                            {group.teacherPercent}%
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700 border border-blue-100">
+                            {group._count.students} {t.common.students}
+                          </span>
                         </td>
                         <td className="px-4 py-3 text-gray-500">
                           {formatDate(group.createdAt, dateLocale)}
                         </td>
                         <td className="px-4 py-3">
                           {deletingId === group.id ? (
-                            <span className="flex items-center gap-1 text-gray-400 text-xs">
-                              <Spinner /> {t.common.deleting}
-                            </span>
+                            <span className="flex items-center gap-1 text-gray-400 text-xs"><Spinner /> {t.common.deleting}</span>
                           ) : (
                             <div className="flex items-center gap-2">
-                              <button
-                                onClick={() => openEdit(group)}
-                                className={ghostBtnCls}
-                              >
-                                {t.common.edit}
-                              </button>
+                              <button onClick={() => openEdit(group)} className={ghostBtnCls}>{t.common.edit}</button>
                               <button
                                 onClick={() => setDeleteConfirmId(group.id)}
-                                className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 transition-colors"
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
                               >
                                 {t.common.delete}
                               </button>
@@ -400,62 +410,23 @@ export default function GroupsPage() {
         </div>
       </div>
 
+      {/* Edit Modal */}
       {editingGroup && (
         <Backdrop onClick={closeEdit}>
           <ModalCard onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-lg font-semibold text-gray-900">{t.groups.editGroup}</h2>
-              <button
-                onClick={closeEdit}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
-                aria-label="Close"
-              >
+              <button onClick={closeEdit} className="text-gray-400 hover:text-gray-600 transition-colors">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
             <form onSubmit={handleSaveEdit} className="space-y-4">
-              <div>
-                <label className={labelCls}>
-                  {t.groups.groupName} <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  required
-                  autoFocus
-                  className={inputCls}
-                />
-              </div>
-              <div>
-                <label className={labelCls}>{t.groups.descriptionLabel}</label>
-                <textarea
-                  value={editDescription}
-                  onChange={(e) => setEditDescription(e.target.value)}
-                  rows={2}
-                  placeholder={t.groups.scheduleHint}
-                  className={inputCls + " resize-none"}
-                />
-              </div>
-              <div>
-                <label className={labelCls}>{t.groups.monthlyFee}</label>
-                <input
-                  type="number"
-                  min="0"
-                  step="1000"
-                  placeholder={t.groups.feePlaceholder}
-                  value={editMonthlyFee}
-                  onChange={(e) => setEditMonthlyFee(e.target.value)}
-                  className={inputCls}
-                />
-              </div>
+              <GroupFormFields values={editForm} onChange={(v) => setEditForm((p) => ({ ...p, ...v }))} />
               {editError && <ErrorPill message={editError} />}
               <div className="flex justify-end gap-3 pt-1">
-                <button type="button" onClick={closeEdit} className={ghostBtnCls}>
-                  {t.common.cancel}
-                </button>
+                <button type="button" onClick={closeEdit} className={ghostBtnCls}>{t.common.cancel}</button>
                 <button type="submit" disabled={saving} className={primaryBtnCls}>
                   {saving && <Spinner />}
                   {saving ? t.common.saving : t.common.saveChanges}
@@ -466,6 +437,7 @@ export default function GroupsPage() {
         </Backdrop>
       )}
 
+      {/* Delete Confirm */}
       {deleteConfirmId && confirmGroup && (
         <Backdrop onClick={() => setDeleteConfirmId(null)}>
           <ModalCard onClick={(e) => e.stopPropagation()}>
@@ -489,15 +461,10 @@ export default function GroupsPage() {
               </div>
             </div>
             <div className="flex justify-end gap-3 mt-6">
-              <button
-                onClick={() => setDeleteConfirmId(null)}
-                className={ghostBtnCls}
-              >
-                {t.common.cancel}
-              </button>
+              <button onClick={() => setDeleteConfirmId(null)} className={ghostBtnCls}>{t.common.cancel}</button>
               <button
                 onClick={() => handleDelete(deleteConfirmId)}
-                className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors"
+                className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-700 transition-colors"
               >
                 {t.groups.deleteGroup}
               </button>

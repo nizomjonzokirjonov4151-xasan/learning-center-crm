@@ -19,12 +19,14 @@ export default async function TeacherDashboard({ session }: { session: SessionPa
   const now = new Date();
   const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
   const teacherId = session.teacherId;
+  const currentMonth = now.getMonth() + 1;
+  const currentYear = now.getFullYear();
 
-  const [myGroups, todayAttendance, mySchedules] = await Promise.all([
+  const [myGroups, todayAttendance, mySchedules, commissionGroups] = await Promise.all([
     safe(
       () =>
         prisma.group.findMany({
-          where: teacherId ? { schedules: { some: { teacherId } } } : {},
+          where: teacherId ? { teacherId } : {},
           include: {
             _count: { select: { students: true } },
             schedules: {
@@ -41,7 +43,7 @@ export default async function TeacherDashboard({ session }: { session: SessionPa
         prisma.attendance.findMany({
           where: {
             date: todayUTC,
-            ...(teacherId ? { group: { schedules: { some: { teacherId } } } } : {}),
+            ...(teacherId ? { group: { teacherId } } : {}),
           },
           select: { status: true, student: { select: { fullName: true } }, group: { select: { name: true } } },
           orderBy: { createdAt: "desc" },
@@ -60,6 +62,31 @@ export default async function TeacherDashboard({ session }: { session: SessionPa
           : Promise.resolve([]),
       []
     ),
+    safe(
+      () =>
+        teacherId
+          ? prisma.group.findMany({
+              where: { teacherId },
+              select: {
+                id: true,
+                name: true,
+                monthlyFee: true,
+                teacherPercent: true,
+                _count: { select: { students: true } },
+                students: {
+                  select: {
+                    payments: {
+                      where: { month: currentMonth, year: currentYear },
+                      select: { amount: true },
+                    },
+                  },
+                },
+              },
+              orderBy: { name: "asc" },
+            })
+          : Promise.resolve([]),
+      []
+    ),
   ]);
 
   const totalStudents = myGroups.reduce((sum, g) => sum + g._count.students, 0);
@@ -69,7 +96,21 @@ export default async function TeacherDashboard({ session }: { session: SessionPa
   const attendancePct =
     todayAttendance.length > 0 ? Math.round((presentToday / todayAttendance.length) * 100) : null;
 
-  // dayOfWeek: 1=Mon...7=Sun. Jan 1 2024 was a Monday.
+  const commissionBreakdown = commissionGroups.map((g) => {
+    const revenue = g.students.reduce(
+      (sum, s) => sum + s.payments.reduce((ps, p) => ps + p.amount, 0),
+      0
+    );
+    const earnedSalary = revenue * (g.teacherPercent / 100);
+    return { groupId: g.id, groupName: g.name, studentCount: g._count.students, teacherPercent: g.teacherPercent, revenue, earnedSalary };
+  });
+  const totalRevenue = commissionBreakdown.reduce((s, g) => s + g.revenue, 0);
+  const totalSalary = commissionBreakdown.reduce((s, g) => s + g.earnedSalary, 0);
+  const avgCommissionPct =
+    commissionBreakdown.length > 0
+      ? Math.round(commissionBreakdown.reduce((s, g) => s + g.teacherPercent, 0) / commissionBreakdown.length)
+      : 0;
+
   const getDayName = (day: number) =>
     new Date(2024, 0, day).toLocaleDateString(dateLocale, { weekday: "short" });
 
@@ -81,6 +122,8 @@ export default async function TeacherDashboard({ session }: { session: SessionPa
 
   const JS_DAY_TO_SCHEMA = [7, 1, 2, 3, 4, 5, 6];
   const todaySchemaDay = JS_DAY_TO_SCHEMA[now.getDay()];
+
+  const fmt = (n: number) => new Intl.NumberFormat(dateLocale).format(Math.round(n));
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -149,6 +192,100 @@ export default async function TeacherDashboard({ session }: { session: SessionPa
                 </p>
               </div>
             </div>
+          </div>
+        </section>
+
+        {/* Earnings section */}
+        <section>
+          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">{t.teacherDashboard.myEarnings}</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+            {/* Revenue */}
+            <div className="bg-white rounded-2xl border border-gray-200 border-l-4 border-l-violet-500 p-5 flex items-start gap-4 shadow-sm">
+              <div className="w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-violet-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide leading-none">{t.teacherDashboard.revenueThisMonth}</p>
+                <p className="text-xl font-bold text-gray-900 mt-1.5 leading-none">{fmt(totalRevenue)}</p>
+                <p className="text-xs text-gray-400 mt-1.5">UZS</p>
+              </div>
+            </div>
+
+            {/* Commission % */}
+            <div className="bg-white rounded-2xl border border-gray-200 border-l-4 border-l-indigo-500 p-5 flex items-start gap-4 shadow-sm">
+              <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 14.25l6-6m4.5-3.493V21.75l-3.75-1.5-3.75 1.5-3.75-1.5-3.75 1.5V4.757c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0c1.1.128 1.907 1.077 1.907 2.185ZM9.75 9h.008v.008H9.75V9Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm4.125 4.5h.008v.008h-.008V13.5Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide leading-none">{t.teacherDashboard.commissionRate}</p>
+                <p className="text-xl font-bold text-gray-900 mt-1.5 leading-none">{avgCommissionPct}%</p>
+                <p className="text-xs text-gray-400 mt-1.5">{t.teacherDashboard.commission}</p>
+              </div>
+            </div>
+
+            {/* Expected salary */}
+            <div className="bg-white rounded-2xl border border-gray-200 border-l-4 border-l-green-500 p-5 flex items-start gap-4 shadow-sm">
+              <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide leading-none">{t.teacherDashboard.expectedSalary}</p>
+                <p className="text-xl font-bold text-gray-900 mt-1.5 leading-none">{fmt(totalSalary)}</p>
+                <p className="text-xs text-gray-400 mt-1.5">UZS</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Group breakdown table */}
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+            <div className="px-5 py-3 border-b border-gray-100">
+              <h3 className="text-sm font-semibold text-gray-700">{t.teacherDashboard.groupBreakdown}</h3>
+            </div>
+            {commissionBreakdown.length === 0 ? (
+              <div className="px-5 py-8 text-center text-sm text-gray-400">{t.teacherDashboard.noRevenue}</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50 border-b border-gray-100">
+                    <tr>
+                      {[t.teacherDashboard.group, t.common.students, t.teacherDashboard.commissionRate, t.teacherDashboard.revenue, t.teacherDashboard.earnedSalary].map((h) => (
+                        <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {commissionBreakdown.map((row) => (
+                      <tr key={row.groupId} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-4 py-3 font-medium text-gray-900">{row.groupName}</td>
+                        <td className="px-4 py-3 text-gray-600">{row.studentCount}</td>
+                        <td className="px-4 py-3">
+                          <span className="inline-flex items-center rounded-full bg-violet-50 border border-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700">
+                            {row.teacherPercent}%
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-gray-700 font-medium">{fmt(row.revenue)} UZS</td>
+                        <td className="px-4 py-3 text-green-700 font-semibold">{fmt(row.earnedSalary)} UZS</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot className="border-t-2 border-gray-200 bg-gray-50">
+                    <tr>
+                      <td colSpan={3} className="px-4 py-3 text-sm font-semibold text-gray-700">Total</td>
+                      <td className="px-4 py-3 text-sm font-semibold text-gray-700">{fmt(totalRevenue)} UZS</td>
+                      <td className="px-4 py-3 text-sm font-bold text-green-700">{fmt(totalSalary)} UZS</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            )}
           </div>
         </section>
 

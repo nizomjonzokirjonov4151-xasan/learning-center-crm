@@ -3,48 +3,54 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 
+type GroupOption = { id: string; name: string; teacher: { id: string; fullName: string; subject: string } | null };
+
 type Student = {
   id: string;
   fullName: string;
   phone: string;
+  group: { id: string; name: string; teacher: { id: string; fullName: string; subject: string } | null } | null;
   createdAt: string;
 };
 
 export default function StudentsPage() {
   const { t, dateLocale } = useTranslation();
-  // ── list ─────────────────────────────────────────────────────────────
+
   const [students, setStudents] = useState<Student[]>([]);
+  const [groups, setGroups] = useState<GroupOption[]>([]);
   const [listLoading, setListLoading] = useState(true);
   const [listError, setListError] = useState<string | null>(null);
 
-  // ── add-student form ──────────────────────────────────────────────────
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
+  const [groupId, setGroupId] = useState("");
   const [addSubmitting, setAddSubmitting] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
 
-  // ── edit modal ────────────────────────────────────────────────────────
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [editFullName, setEditFullName] = useState("");
   const [editPhone, setEditPhone] = useState("");
+  const [editGroupId, setEditGroupId] = useState("");
   const [editSubmitting, setEditSubmitting] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
 
-  // ── delete ────────────────────────────────────────────────────────────
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  // ── data fetching ─────────────────────────────────────────────────────
-  const fetchStudents = useCallback(async () => {
+  const fetchAll = useCallback(async () => {
     setListLoading(true);
     setListError(null);
     try {
-      const res = await fetch("/api/students", { cache: "no-store" });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.detail ?? `HTTP ${res.status}`);
+      const [sRes, gRes] = await Promise.all([
+        fetch("/api/students", { cache: "no-store" }),
+        fetch("/api/groups"),
+      ]);
+      if (!sRes.ok) {
+        const body = await sRes.json().catch(() => ({}));
+        throw new Error(body.detail ?? `HTTP ${sRes.status}`);
       }
-      setStudents(await res.json());
+      setStudents(await sRes.json());
+      if (gRes.ok) setGroups(await gRes.json());
     } catch (err) {
       setListError(err instanceof Error ? err.message : "Failed to load students");
     } finally {
@@ -52,11 +58,8 @@ export default function StudentsPage() {
     }
   }, []);
 
-  useEffect(() => {
-    fetchStudents();
-  }, [fetchStudents]);
+  useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  // Close modals on Escape
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key !== "Escape") return;
@@ -67,7 +70,6 @@ export default function StudentsPage() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // ── add student ───────────────────────────────────────────────────────
   async function handleAdd(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setAddSubmitting(true);
@@ -76,15 +78,16 @@ export default function StudentsPage() {
       const res = await fetch("/api/students", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fullName, phone }),
+        body: JSON.stringify({ fullName, phone, groupId: groupId || null }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body.detail ?? `HTTP ${res.status}`);
+        throw new Error(body.detail ?? body.error ?? `HTTP ${res.status}`);
       }
       setFullName("");
       setPhone("");
-      await fetchStudents();
+      setGroupId("");
+      await fetchAll();
     } catch (err) {
       setAddError(err instanceof Error ? err.message : "Failed to add student");
     } finally {
@@ -92,11 +95,11 @@ export default function StudentsPage() {
     }
   }
 
-  // ── edit student ──────────────────────────────────────────────────────
   function openEdit(student: Student) {
     setEditingStudent(student);
     setEditFullName(student.fullName);
     setEditPhone(student.phone);
+    setEditGroupId(student.group?.id ?? "");
     setEditError(null);
   }
 
@@ -114,14 +117,14 @@ export default function StudentsPage() {
       const res = await fetch(`/api/students/${editingStudent.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fullName: editFullName, phone: editPhone }),
+        body: JSON.stringify({ fullName: editFullName, phone: editPhone, groupId: editGroupId || null }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body.detail ?? `HTTP ${res.status}`);
+        throw new Error(body.detail ?? body.error ?? `HTTP ${res.status}`);
       }
       closeEdit();
-      await fetchStudents();
+      await fetchAll();
     } catch (err) {
       setEditError(err instanceof Error ? err.message : "Failed to update student");
     } finally {
@@ -129,17 +132,16 @@ export default function StudentsPage() {
     }
   }
 
-  // ── delete student ────────────────────────────────────────────────────
   async function handleDelete(id: string) {
     setDeletingId(id);
     setDeleteConfirmId(null);
     try {
       const res = await fetch(`/api/students/${id}`, { method: "DELETE" });
-      if (!res.ok) {
+      if (!res.ok && res.status !== 204) {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.detail ?? `HTTP ${res.status}`);
       }
-      await fetchStudents();
+      await fetchAll();
     } catch (err) {
       setListError(err instanceof Error ? err.message : "Failed to delete student");
     } finally {
@@ -149,13 +151,11 @@ export default function StudentsPage() {
 
   const studentToDelete = students.find((s) => s.id === deleteConfirmId);
 
-  // ── render ────────────────────────────────────────────────────────────
   return (
     <>
       <div className="min-h-screen bg-gray-50 py-10 px-4">
         <div className="max-w-5xl mx-auto space-y-8">
 
-          {/* Header */}
           <div>
             <h1 className="text-3xl font-bold text-gray-900">{t.students.title}</h1>
             <p className="mt-1 text-sm text-gray-500">{t.students.subtitle}</p>
@@ -164,34 +164,55 @@ export default function StudentsPage() {
           {/* Add Student */}
           <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
             <h2 className="text-lg font-semibold text-gray-800 mb-5">{t.students.addStudent}</h2>
-            <form onSubmit={handleAdd} className="flex flex-col sm:flex-row gap-3">
-              <input
-                type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder={t.students.fullName}
-                required
-                disabled={addSubmitting}
-                className={inputCls}
-              />
-              <input
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder={t.students.phone}
-                required
-                disabled={addSubmitting}
-                className={inputCls}
-              />
-              <button
-                type="submit"
-                disabled={addSubmitting || !fullName.trim() || !phone.trim()}
-                className={primaryBtnCls}
-              >
-                {addSubmitting ? t.students.adding : t.students.addStudent}
-              </button>
+            <form onSubmit={handleAdd} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <input
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder={t.students.fullName}
+                  required
+                  disabled={addSubmitting}
+                  className={inputCls}
+                />
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder={t.students.phone}
+                  required
+                  disabled={addSubmitting}
+                  className={inputCls}
+                />
+                <div className="sm:col-span-2">
+                  <label className={labelCls}>{t.students.groupLabel} <span className="text-red-500">*</span></label>
+                  <select
+                    value={groupId}
+                    onChange={(e) => setGroupId(e.target.value)}
+                    required
+                    disabled={addSubmitting}
+                    className={inputCls}
+                  >
+                    <option value="">{t.students.groupPlaceholder}</option>
+                    {groups.map((g) => (
+                      <option key={g.id} value={g.id}>
+                        {g.name}{g.teacher ? ` (${g.teacher.fullName})` : ""}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              {addError && <ErrorPill>{addError}</ErrorPill>}
+              <div className="flex justify-end">
+                <button
+                  type="submit"
+                  disabled={addSubmitting || !fullName.trim() || !phone.trim() || !groupId}
+                  className={primaryBtnCls}
+                >
+                  {addSubmitting ? t.students.adding : t.students.addStudent}
+                </button>
+              </div>
             </form>
-            {addError && <ErrorPill>{addError}</ErrorPill>}
           </section>
 
           {/* Table */}
@@ -200,16 +221,11 @@ export default function StudentsPage() {
               <h2 className="text-lg font-semibold text-gray-800">
                 {t.students.allStudents}
                 {!listLoading && (
-                  <span className="ml-2 text-sm font-normal text-gray-400">
-                    ({students.length})
-                  </span>
+                  <span className="ml-2 text-sm font-normal text-gray-400">({students.length})</span>
                 )}
               </h2>
               {!listLoading && (
-                <button
-                  onClick={fetchStudents}
-                  className="text-sm text-gray-400 hover:text-gray-700 transition-colors"
-                >
+                <button onClick={fetchAll} className="text-sm text-gray-400 hover:text-gray-700 transition-colors">
                   ↻ {t.common.refresh}
                 </button>
               )}
@@ -222,17 +238,12 @@ export default function StudentsPage() {
             ) : listError ? (
               <div className="py-16 text-center">
                 <p className="text-red-600 text-sm">{listError}</p>
-                <button
-                  onClick={fetchStudents}
-                  className="mt-3 text-sm text-blue-600 hover:underline"
-                >
+                <button onClick={fetchAll} className="mt-3 text-sm text-blue-600 hover:underline">
                   {t.students.tryAgain}
                 </button>
               </div>
             ) : students.length === 0 ? (
-              <div className="py-20 text-center text-gray-400 text-sm">
-                {t.students.noStudents}
-              </div>
+              <div className="py-20 text-center text-gray-400 text-sm">{t.students.noStudents}</div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -240,30 +251,36 @@ export default function StudentsPage() {
                     <tr className="bg-gray-50 border-b border-gray-100">
                       <Th>{t.students.fullName}</Th>
                       <Th>{t.students.phone}</Th>
+                      <Th>{t.students.groupLabel}</Th>
+                      <Th>{t.students.teacherLabel}</Th>
                       <Th>{t.students.createdAt}</Th>
-                      <Th>
-                        <span className="sr-only">{t.common.actions}</span>
-                      </Th>
+                      <Th><span className="sr-only">{t.common.actions}</span></Th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {students.map((student) => {
                       const isDeleting = deletingId === student.id;
-                      const isRowBusy = isDeleting;
                       return (
-                        <tr
-                          key={student.id}
-                          className="hover:bg-gray-50 transition-colors"
-                        >
-                          <td className="px-6 py-4 font-medium text-gray-900">
-                            {student.fullName}
+                        <tr key={student.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-6 py-4 font-medium text-gray-900">{student.fullName}</td>
+                          <td className="px-6 py-4 text-gray-600">{student.phone}</td>
+                          <td className="px-6 py-4">
+                            {student.group ? (
+                              <span className="inline-flex items-center rounded-full bg-blue-50 border border-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-700">
+                                {student.group.name}
+                              </span>
+                            ) : (
+                              <span className="text-xs text-gray-300 italic">{t.students.noGroup}</span>
+                            )}
                           </td>
-                          <td className="px-6 py-4 text-gray-600">
-                            {student.phone}
+                          <td className="px-6 py-4 text-gray-600 text-xs">
+                            {student.group?.teacher ? (
+                              <span>{student.group.teacher.fullName}</span>
+                            ) : (
+                              <span className="text-gray-300 italic">—</span>
+                            )}
                           </td>
-                          <td className="px-6 py-4 text-gray-400">
-                            {formatDate(student.createdAt, dateLocale)}
-                          </td>
+                          <td className="px-6 py-4 text-gray-400">{formatDate(student.createdAt, dateLocale)}</td>
                           <td className="px-6 py-4">
                             <div className="flex items-center justify-end gap-2">
                               {isDeleting ? (
@@ -272,15 +289,13 @@ export default function StudentsPage() {
                                 <>
                                   <button
                                     onClick={() => openEdit(student)}
-                                    disabled={isRowBusy}
-                                    className="rounded-md px-3 py-1.5 text-xs font-medium text-blue-600 border border-blue-200 hover:bg-blue-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                    className="rounded-md px-3 py-1.5 text-xs font-medium text-blue-600 border border-blue-200 hover:bg-blue-50 transition-colors"
                                   >
                                     {t.common.edit}
                                   </button>
                                   <button
                                     onClick={() => setDeleteConfirmId(student.id)}
-                                    disabled={isRowBusy}
-                                    className="rounded-md px-3 py-1.5 text-xs font-medium text-red-600 border border-red-200 hover:bg-red-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                    className="rounded-md px-3 py-1.5 text-xs font-medium text-red-600 border border-red-200 hover:bg-red-50 transition-colors"
                                   >
                                     {t.common.delete}
                                   </button>
@@ -299,7 +314,7 @@ export default function StudentsPage() {
         </div>
       </div>
 
-      {/* ── Edit Modal ─────────────────────────────────────────────────── */}
+      {/* Edit Modal */}
       {editingStudent && (
         <Backdrop onClick={closeEdit}>
           <ModalCard onClick={(e) => e.stopPropagation()}>
@@ -327,29 +342,34 @@ export default function StudentsPage() {
                   className={`${inputCls} w-full`}
                 />
               </div>
+              <div>
+                <label className={labelCls}>{t.students.groupLabel}</label>
+                <select
+                  value={editGroupId}
+                  onChange={(e) => setEditGroupId(e.target.value)}
+                  disabled={editSubmitting}
+                  className={`${inputCls} w-full`}
+                >
+                  <option value="">{t.students.groupPlaceholder}</option>
+                  {groups.map((g) => (
+                    <option key={g.id} value={g.id}>
+                      {g.name}{g.teacher ? ` (${g.teacher.fullName})` : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
               {editError && <ErrorPill>{editError}</ErrorPill>}
               <div className="flex justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={closeEdit}
-                  disabled={editSubmitting}
-                  className={ghostBtnCls}
-                >
+                <button type="button" onClick={closeEdit} disabled={editSubmitting} className={ghostBtnCls}>
                   {t.common.cancel}
                 </button>
                 <button
                   type="submit"
-                  disabled={
-                    editSubmitting ||
-                    !editFullName.trim() ||
-                    !editPhone.trim()
-                  }
+                  disabled={editSubmitting || !editFullName.trim() || !editPhone.trim()}
                   className={primaryBtnCls}
                 >
                   {editSubmitting ? (
-                    <span className="flex items-center gap-2">
-                      <Spinner /> {t.common.saving}
-                    </span>
+                    <span className="flex items-center gap-2"><Spinner /> {t.common.saving}</span>
                   ) : (
                     t.common.saveChanges
                   )}
@@ -360,47 +380,30 @@ export default function StudentsPage() {
         </Backdrop>
       )}
 
-      {/* ── Delete Confirmation ────────────────────────────────────────── */}
+      {/* Delete Confirmation */}
       {deleteConfirmId && studentToDelete && (
         <Backdrop onClick={() => setDeleteConfirmId(null)}>
           <ModalCard onClick={(e) => e.stopPropagation()} narrow>
             <div className="flex flex-col items-center text-center gap-4">
               <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-100">
-                <svg
-                  className="w-6 h-6 text-red-600"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
-                  />
+                <svg className="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
                 </svg>
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">
-                  {t.students.deleteStudent}
-                </h2>
+                <h2 className="text-lg font-semibold text-gray-900">{t.students.deleteStudent}</h2>
                 <p className="mt-1 text-sm text-gray-500">
-                  <span className="font-medium text-gray-700">
-                    {studentToDelete.fullName}
-                  </span>{" "}
+                  <span className="font-medium text-gray-700">{studentToDelete.fullName}</span>{" "}
                   {t.students.deleteConfirm}
                 </p>
               </div>
               <div className="flex gap-3 w-full">
-                <button
-                  onClick={() => setDeleteConfirmId(null)}
-                  className={`${ghostBtnCls} flex-1`}
-                >
+                <button onClick={() => setDeleteConfirmId(null)} className={`${ghostBtnCls} flex-1`}>
                   {t.common.cancel}
                 </button>
                 <button
                   onClick={() => handleDelete(deleteConfirmId)}
-                  className="flex-1 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700 active:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors"
+                  className="flex-1 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700 active:bg-red-800 transition-colors"
                 >
                   {t.common.delete}
                 </button>
@@ -415,7 +418,7 @@ export default function StudentsPage() {
 
 // ── Shared style constants ─────────────────────────────────────────────────
 const inputCls =
-  "rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:opacity-60 transition";
+  "rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:opacity-60 transition w-full";
 
 const primaryBtnCls =
   "rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 active:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap";
@@ -425,7 +428,6 @@ const ghostBtnCls =
 
 const labelCls = "block text-sm font-medium text-gray-700 mb-1.5";
 
-// ── Small components ───────────────────────────────────────────────────────
 function Th({ children }: { children: React.ReactNode }) {
   return (
     <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
@@ -436,19 +438,13 @@ function Th({ children }: { children: React.ReactNode }) {
 
 function ErrorPill({ children }: { children: React.ReactNode }) {
   return (
-    <p className="mt-4 text-sm text-red-700 bg-red-50 border border-red-100 rounded-lg px-4 py-2.5">
+    <p className="mt-2 text-sm text-red-700 bg-red-50 border border-red-100 rounded-lg px-4 py-2.5">
       {children}
     </p>
   );
 }
 
-function Backdrop({
-  children,
-  onClick,
-}: {
-  children: React.ReactNode;
-  onClick: () => void;
-}) {
+function Backdrop({ children, onClick }: { children: React.ReactNode; onClick: () => void }) {
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
@@ -480,25 +476,9 @@ function ModalCard({
 
 function Spinner({ className = "" }: { className?: string }) {
   return (
-    <svg
-      className={`animate-spin h-4 w-4 ${className}`}
-      fill="none"
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-    >
-      <circle
-        className="opacity-25"
-        cx="12"
-        cy="12"
-        r="10"
-        stroke="currentColor"
-        strokeWidth="4"
-      />
-      <path
-        className="opacity-75"
-        fill="currentColor"
-        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-      />
+    <svg className={`animate-spin h-4 w-4 ${className}`} fill="none" viewBox="0 0 24 24" aria-hidden="true">
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
     </svg>
   );
 }
@@ -508,7 +488,5 @@ function formatDate(iso: string, locale: string) {
     year: "numeric",
     month: "short",
     day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
   });
 }
