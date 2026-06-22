@@ -76,6 +76,11 @@ export type Translations = {
     profile: string
     signOut: string
     crmSystem: string
+    sectionOverview: string
+    sectionAcademics: string
+    sectionFinance: string
+    sectionPeople: string
+    sectionSystem: string
   }
   auth: {
     title: string
@@ -90,6 +95,10 @@ export type Translations = {
     noAccountsYet: string
     createAdminAccount: string
     copyright: string
+    tagline: string
+    highlightStudents: string
+    highlightPayments: string
+    highlightInsights: string
   }
   dashboard: {
     welcomeBack: string
@@ -127,6 +136,13 @@ export type Translations = {
     noGroup: string
     noPaymentsYet: string
     noAttendanceRecords: string
+    insights: string
+    outstandingPayments: string
+    totalOutstanding: string
+    noDebtors: string
+    daysOverdueSuffix: string
+    topGroups: string
+    noGroupRevenue: string
     quickActions: string
     addStudent: string
     addGroup: string
@@ -283,6 +299,42 @@ export type Translations = {
     statusActive: string
     statusInactive: string
   }
+  schedules: {
+    title: string
+    subtitle: string
+    addSchedule: string
+    loading: string
+    loadFailed: string
+    classSingular: string
+    classPlural: string
+    today: string
+    noClassesScheduled: string
+    noSchedulesYet: string
+    noSchedulesHint: string
+    group: string
+    teacher: string
+    dayOfWeek: string
+    startTime: string
+    endTime: string
+    room: string
+    roomPlaceholder: string
+    selectGroupPlaceholder: string
+    selectTeacherPlaceholder: string
+    noActiveTeachers: string
+    allFieldsRequired: string
+    saveFailed: string
+    networkError: string
+    endTimeAfterStart: string
+    editSchedule: string
+    newSchedule: string
+    deleteSchedule: string
+    deleteScheduleConfirm: string
+    roomPrefix: string
+    saving: string
+    update: string
+    create: string
+    deleting: string
+  }
   rooms: {
     title: string
     subtitle: string
@@ -359,6 +411,8 @@ export type Translations = {
     liveData: string
     liveDataDesc: string
     generatedOnDemand: string
+    downloadAllPdfs: string
+    downloadAllExcel: string
   }
   telegram: {
     title: string

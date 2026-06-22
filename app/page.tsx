@@ -4,6 +4,7 @@ import Link from "next/link";
 import { DashboardCharts, type MonthStudentPoint, type MonthRevenuePoint, type AttendancePoint } from "@/app/components/DashboardCharts";
 import TeacherDashboard from "@/app/components/TeacherDashboard";
 import { getServerTranslations } from "@/lib/i18n";
+import { getDebtors } from "@/lib/debtors";
 
 async function safe<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
   try { return await fn(); } catch { return fallback; }
@@ -87,6 +88,9 @@ export default async function DashboardPage() {
     recentStudents,
     recentPayments,
     recentAttendance,
+    // Insights
+    debtors,
+    paymentsThisMonthByGroup,
   ] = await Promise.all([
     safe(() => prisma.student.count(), 0),
     safe(() => prisma.student.count({ where: { groupId: { not: null } } }), 0),
@@ -192,6 +196,19 @@ export default async function DashboardPage() {
         }),
       []
     ),
+    // Insights
+    safe(() => getDebtors(), []),
+    safe(
+      () =>
+        prisma.payment.findMany({
+          where: { month: currentMonth, year: currentYear },
+          select: {
+            amount: true,
+            student: { select: { group: { select: { id: true, name: true } } } },
+          },
+        }),
+      []
+    ),
   ]);
 
   // ── Derived KPI values ───────────────────────────────────────────────────
@@ -240,6 +257,23 @@ export default async function DashboardPage() {
       late: dayRecs.filter((a) => a.status === "LATE").length,
     });
   }
+
+  // ── Insights: outstanding payments + top performing groups ───────────────
+  const topDebtors = debtors.slice(0, 5);
+  const totalOutstanding = debtors.reduce((sum, d) => sum + d.remainingDebt, 0);
+
+  const groupRevenue = new Map<string, { name: string; revenue: number }>();
+  for (const p of paymentsThisMonthByGroup) {
+    const group = p.student.group;
+    if (!group) continue;
+    const entry = groupRevenue.get(group.id) ?? { name: group.name, revenue: 0 };
+    entry.revenue += p.amount;
+    groupRevenue.set(group.id, entry);
+  }
+  const topGroups = Array.from(groupRevenue.entries())
+    .map(([id, v]) => ({ id, ...v }))
+    .sort((a, b) => b.revenue - a.revenue)
+    .slice(0, 5);
 
   // ── KPI card definitions ─────────────────────────────────────────────────
   const kpiCards = [
@@ -567,6 +601,87 @@ export default async function DashboardPage() {
                           {new Date(a.date).toLocaleDateString(dateLocale, { month: "short", day: "numeric" })}
                         </time>
                       </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </section>
+
+        {/* ── Insights ──────────────────────────────────────────────────── */}
+        <section>
+          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">
+            {t.dashboard.insights}
+          </h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+            {/* Outstanding Payments */}
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-700">{t.dashboard.outstandingPayments}</h3>
+                  {debtors.length > 0 && (
+                    <p className="text-xs text-red-600 font-semibold mt-0.5">
+                      {fmt(totalOutstanding)} UZS {t.dashboard.totalOutstanding}
+                    </p>
+                  )}
+                </div>
+                <Link href="/debtors" className="text-xs text-blue-600 hover:underline font-medium">
+                  {t.common.viewAll}
+                </Link>
+              </div>
+              {topDebtors.length === 0 ? (
+                <div className="px-5 py-8 text-center text-sm text-gray-400">
+                  {t.dashboard.noDebtors}
+                </div>
+              ) : (
+                <ul className="divide-y divide-gray-50">
+                  {topDebtors.map((d) => (
+                    <li key={d.id} className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 transition-colors">
+                      <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-xs font-bold text-red-600 flex-shrink-0 uppercase">
+                        {d.fullName.charAt(0)}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-gray-900 truncate">{d.fullName}</p>
+                        <p className="text-xs text-gray-400 truncate">
+                          {d.groupName} · {d.daysOverdue}{t.dashboard.daysOverdueSuffix}
+                        </p>
+                      </div>
+                      <span className="text-sm font-semibold text-red-700 flex-shrink-0">
+                        {fmt(d.remainingDebt)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            {/* Top Performing Groups */}
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+                <h3 className="text-sm font-semibold text-gray-700">{t.dashboard.topGroups}</h3>
+                <Link href="/groups" className="text-xs text-blue-600 hover:underline font-medium">
+                  {t.common.viewAll}
+                </Link>
+              </div>
+              {topGroups.length === 0 ? (
+                <div className="px-5 py-8 text-center text-sm text-gray-400">
+                  {t.dashboard.noGroupRevenue}
+                </div>
+              ) : (
+                <ul className="divide-y divide-gray-50">
+                  {topGroups.map((g, i) => (
+                    <li key={g.id} className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 transition-colors">
+                      <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-xs font-bold text-emerald-700 flex-shrink-0">
+                        #{i + 1}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-gray-900 truncate">{g.name}</p>
+                      </div>
+                      <span className="text-sm font-semibold text-emerald-700 flex-shrink-0">
+                        {fmt(g.revenue)}
+                      </span>
                     </li>
                   ))}
                 </ul>

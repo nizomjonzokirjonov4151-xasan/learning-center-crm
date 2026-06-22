@@ -1,16 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-
-const DAYS = [
-  { value: 1, label: "Monday", short: "Mon" },
-  { value: 2, label: "Tuesday", short: "Tue" },
-  { value: 3, label: "Wednesday", short: "Wed" },
-  { value: 4, label: "Thursday", short: "Thu" },
-  { value: 5, label: "Friday", short: "Fri" },
-  { value: 6, label: "Saturday", short: "Sat" },
-  { value: 7, label: "Sunday", short: "Sun" },
-];
+import { useTranslation } from "@/lib/i18n/useTranslation";
 
 // JS getDay(): 0=Sun,1=Mon,...,6=Sat → schema: 1=Mon,...,7=Sun
 const JS_DAY_TO_SCHEMA = [7, 1, 2, 3, 4, 5, 6];
@@ -48,6 +39,18 @@ const EMPTY_FORM: FormState = {
 };
 
 export default function SchedulesPage() {
+  const { t } = useTranslation();
+
+  const DAYS = [
+    { value: 1, label: t.parentPortal.monday },
+    { value: 2, label: t.parentPortal.tuesday },
+    { value: 3, label: t.parentPortal.wednesday },
+    { value: 4, label: t.parentPortal.thursday },
+    { value: 5, label: t.parentPortal.friday },
+    { value: 6, label: t.parentPortal.saturday },
+    { value: 7, label: t.parentPortal.sunday },
+  ].map((d) => ({ ...d, short: d.label.slice(0, 3) }));
+
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
@@ -77,9 +80,9 @@ export default function SchedulesPage() {
         setGroups(Array.isArray(grps) ? grps : []);
         setTeachers(Array.isArray(tchs) ? tchs : []);
       })
-      .catch(() => setPageError("Failed to load data. Please refresh."))
+      .catch(() => setPageError(t.schedules.loadFailed))
       .finally(() => setLoading(false));
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     loadAll();
@@ -112,7 +115,7 @@ export default function SchedulesPage() {
 
   async function handleSave() {
     if (!form.groupId || !form.teacherId || !form.startTime || !form.endTime || !form.room.trim()) {
-      setFormError("All fields are required.");
+      setFormError(t.schedules.allFieldsRequired);
       return;
     }
     setSaving(true);
@@ -127,7 +130,7 @@ export default function SchedulesPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setFormError(data.error ?? "Failed to save. Please try again.");
+        setFormError(data.error ?? t.schedules.saveFailed);
         return;
       }
       if (editTarget) {
@@ -137,7 +140,7 @@ export default function SchedulesPage() {
       }
       setModalOpen(false);
     } catch {
-      setFormError("Network error. Please try again.");
+      setFormError(t.schedules.networkError);
     } finally {
       setSaving(false);
     }
@@ -167,14 +170,14 @@ export default function SchedulesPage() {
       .sort((a, b) => a.startTime.localeCompare(b.startTime)),
   }));
 
-  const activeTeachers = teachers.filter((t) => t.isActive);
+  const activeTeachers = teachers.filter((tch) => tch.isActive);
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-gray-400">Loading schedules…</p>
+          <p className="text-sm text-gray-400">{t.schedules.loading}</p>
         </div>
       </div>
     );
@@ -187,8 +190,8 @@ export default function SchedulesPage() {
         {/* Header */}
         <div className="flex items-start justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Schedules</h1>
-            <p className="mt-1 text-sm text-gray-500">Weekly class timetable for all groups</p>
+            <h1 className="text-2xl font-bold text-gray-900">{t.schedules.title}</h1>
+            <p className="mt-1 text-sm text-gray-500">{t.schedules.subtitle}</p>
           </div>
           <button
             onClick={openCreate}
@@ -197,7 +200,7 @@ export default function SchedulesPage() {
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
             </svg>
-            Add Schedule
+            {t.schedules.addSchedule}
           </button>
         </div>
 
@@ -221,11 +224,11 @@ export default function SchedulesPage() {
                 className={`rounded-xl border p-4 shadow-sm ${isToday ? "bg-blue-50 border-blue-200" : "bg-white border-gray-200"}`}
               >
                 <p className={`text-xs font-semibold uppercase tracking-wide ${isToday ? "text-blue-600" : "text-gray-400"}`}>
-                  {d.short}{isToday && " · Today"}
+                  {d.short}{isToday && ` · ${t.schedules.today}`}
                 </p>
                 <p className={`text-2xl font-bold mt-1 ${isToday ? "text-blue-900" : "text-gray-900"}`}>{count}</p>
                 <p className={`text-xs mt-0.5 ${isToday ? "text-blue-500" : "text-gray-400"}`}>
-                  class{count !== 1 ? "es" : ""}
+                  {count === 1 ? t.schedules.classSingular : t.schedules.classPlural}
                 </p>
               </div>
             );
@@ -244,16 +247,16 @@ export default function SchedulesPage() {
                 <div className="flex items-center gap-2">
                   <h2 className={`text-sm font-bold ${isToday ? "text-blue-700" : "text-gray-700"}`}>{label}</h2>
                   {isToday && (
-                    <span className="text-xs font-semibold bg-blue-600 text-white px-2 py-0.5 rounded-full">Today</span>
+                    <span className="text-xs font-semibold bg-blue-600 text-white px-2 py-0.5 rounded-full">{t.schedules.today}</span>
                   )}
                 </div>
                 <span className={`text-xs font-medium ${isToday ? "text-blue-500" : "text-gray-400"}`}>
-                  {items.length} class{items.length !== 1 ? "es" : ""}
+                  {items.length} {items.length === 1 ? t.schedules.classSingular : t.schedules.classPlural}
                 </span>
               </div>
 
               {items.length === 0 ? (
-                <div className="px-5 py-5 text-sm text-gray-400 italic">No classes scheduled</div>
+                <div className="px-5 py-5 text-sm text-gray-400 italic">{t.schedules.noClassesScheduled}</div>
               ) : (
                 <div className="divide-y divide-gray-100">
                   {items.map((s) => (
@@ -285,7 +288,7 @@ export default function SchedulesPage() {
                               <svg className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 21v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21m0 0h4.5V3.545M12.75 21h7.5V10.75M2.25 21h1.5m18 0h-18M2.25 21V10.75m0 0l9-7.25m0 0l9 7.25" />
                               </svg>
-                              Room {s.room}
+                              {t.schedules.roomPrefix} {s.room}
                             </span>
                             <span className="text-xs bg-violet-50 text-violet-700 font-medium px-2 py-0.5 rounded-full">
                               {s.teacher.subject}
@@ -300,13 +303,13 @@ export default function SchedulesPage() {
                           onClick={() => openEdit(s)}
                           className="text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition-colors"
                         >
-                          Edit
+                          {t.common.edit}
                         </button>
                         <button
                           onClick={() => setDeleteId(s.id)}
                           className="text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors"
                         >
-                          Delete
+                          {t.common.delete}
                         </button>
                       </div>
                     </div>
@@ -324,8 +327,8 @@ export default function SchedulesPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
               </svg>
             </div>
-            <p className="text-gray-500 font-medium text-sm">No schedules yet</p>
-            <p className="text-gray-400 text-xs mt-1">Click "Add Schedule" to build your weekly timetable.</p>
+            <p className="text-gray-500 font-medium text-sm">{t.schedules.noSchedulesYet}</p>
+            <p className="text-gray-400 text-xs mt-1">{t.schedules.noSchedulesHint}</p>
           </div>
         )}
       </div>
@@ -336,7 +339,7 @@ export default function SchedulesPage() {
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
             <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
               <h3 className="text-base font-bold text-gray-900">
-                {editTarget ? "Edit Schedule" : "New Schedule"}
+                {editTarget ? t.schedules.editSchedule : t.schedules.newSchedule}
               </h3>
               <button
                 onClick={() => setModalOpen(false)}
@@ -360,13 +363,13 @@ export default function SchedulesPage() {
 
               {/* Group */}
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">Group</label>
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5">{t.schedules.group}</label>
                 <select
                   value={form.groupId}
                   onChange={(e) => setField("groupId", e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                 >
-                  <option value="">Select a group…</option>
+                  <option value="">{t.schedules.selectGroupPlaceholder}</option>
                   {groups.map((g) => (
                     <option key={g.id} value={g.id}>{g.name}</option>
                   ))}
@@ -375,25 +378,25 @@ export default function SchedulesPage() {
 
               {/* Teacher */}
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">Teacher</label>
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5">{t.schedules.teacher}</label>
                 <select
                   value={form.teacherId}
                   onChange={(e) => setField("teacherId", e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                 >
-                  <option value="">Select a teacher…</option>
-                  {activeTeachers.map((t) => (
-                    <option key={t.id} value={t.id}>{t.fullName} — {t.subject}</option>
+                  <option value="">{t.schedules.selectTeacherPlaceholder}</option>
+                  {activeTeachers.map((tch) => (
+                    <option key={tch.id} value={tch.id}>{tch.fullName} — {tch.subject}</option>
                   ))}
                 </select>
                 {activeTeachers.length === 0 && (
-                  <p className="mt-1 text-xs text-amber-600">No active teachers found. Add teachers first.</p>
+                  <p className="mt-1 text-xs text-amber-600">{t.schedules.noActiveTeachers}</p>
                 )}
               </div>
 
               {/* Day of week */}
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">Day of Week</label>
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5">{t.schedules.dayOfWeek}</label>
                 <div className="grid grid-cols-7 gap-1">
                   {DAYS.map((d) => (
                     <button
@@ -415,37 +418,37 @@ export default function SchedulesPage() {
               {/* Start / End time */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">Start Time</label>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">{t.schedules.startTime}</label>
                   <input
                     type="time"
                     value={form.startTime}
                     onChange={(e) => setField("startTime", e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">End Time</label>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">{t.schedules.endTime}</label>
                   <input
                     type="time"
                     value={form.endTime}
                     onChange={(e) => setField("endTime", e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                   />
                 </div>
               </div>
               {form.startTime && form.endTime && form.startTime >= form.endTime && (
-                <p className="text-xs text-red-600 -mt-2">End time must be after start time.</p>
+                <p className="text-xs text-red-600 -mt-2">{t.schedules.endTimeAfterStart}</p>
               )}
 
               {/* Room */}
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">Room</label>
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5">{t.schedules.room}</label>
                 <input
                   type="text"
-                  placeholder="e.g. 101, A-204, Main Hall"
+                  placeholder={t.schedules.roomPlaceholder}
                   value={form.room}
                   onChange={(e) => setField("room", e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                 />
               </div>
             </div>
@@ -455,14 +458,14 @@ export default function SchedulesPage() {
                 onClick={() => setModalOpen(false)}
                 className="px-4 py-2 text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
               >
-                Cancel
+                {t.common.cancel}
               </button>
               <button
                 onClick={handleSave}
                 disabled={saving}
                 className="px-5 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60 rounded-lg transition-colors"
               >
-                {saving ? "Saving…" : editTarget ? "Update" : "Create"}
+                {saving ? t.schedules.saving : editTarget ? t.schedules.update : t.schedules.create}
               </button>
             </div>
           </div>
@@ -478,23 +481,23 @@ export default function SchedulesPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
               </svg>
             </div>
-            <h3 className="text-base font-bold text-gray-900 text-center mb-2">Delete Schedule</h3>
+            <h3 className="text-base font-bold text-gray-900 text-center mb-2">{t.schedules.deleteSchedule}</h3>
             <p className="text-sm text-gray-500 text-center mb-6">
-              This will permanently remove this class from the timetable. This action cannot be undone.
+              {t.schedules.deleteScheduleConfirm}
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setDeleteId(null)}
                 className="flex-1 px-4 py-2.5 text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
               >
-                Cancel
+                {t.common.cancel}
               </button>
               <button
                 onClick={handleDelete}
                 disabled={deleting}
                 className="flex-1 px-4 py-2.5 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 disabled:opacity-60 rounded-lg transition-colors"
               >
-                {deleting ? "Deleting…" : "Delete"}
+                {deleting ? t.schedules.deleting : t.common.delete}
               </button>
             </div>
           </div>

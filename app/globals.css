@@ -1,6 +1,16 @@
 @import "tailwindcss";
 
+/*
+ * This product has no dark theme implemented (no `dark:` variants anywhere
+ * in the app). Without this, browsers auto-dark-style native form controls
+ * (inputs/selects/textareas) and invert body text color whenever the OS is
+ * in dark mode, which made typed text in modals nearly invisible — text
+ * color flipped to near-white while the input background stayed light.
+ * Pinning color-scheme to light keeps every native control rendering with
+ * light/dark-text-on-light-background regardless of the user's OS theme.
+ */
 :root {
+  color-scheme: light;
   --background: #ffffff;
   --foreground: #171717;
 }
@@ -12,15 +22,8 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }

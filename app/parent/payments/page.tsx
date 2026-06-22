@@ -72,7 +72,7 @@ export default function ParentPaymentsPage() {
           <select
             value={selectedStudent}
             onChange={(e) => setSelectedStudent(e.target.value)}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 bg-white shadow-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
           >
             <option value="">{t.parentPortal.allChildren}</option>
             {students.map((s) => (

@@ -2,6 +2,9 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "@/lib/i18n/useTranslation";
+import { EmptyState } from "@/app/components/ui/EmptyState";
+import { TableRowSkeleton } from "@/app/components/ui/Skeleton";
+import { Button } from "@/app/components/ui/Button";
 
 type Student = { id: string; fullName: string; phone: string; groupId: string | null };
 
@@ -107,14 +110,10 @@ function ModalCard({ onClick, children }: { onClick: (e: React.MouseEvent) => vo
 }
 
 const inputCls =
-  "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none";
+  "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 bg-white shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none";
 const selectCls =
-  "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white";
+  "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white";
 const labelCls = "block text-sm font-medium text-gray-700 mb-1";
-const primaryBtnCls =
-  "inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed transition-colors";
-const ghostBtnCls =
-  "inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed transition-colors";
 
 // ── Student Profile Card ─────────────────────────────────────────────────────
 
@@ -537,10 +536,9 @@ export default function PaymentsPage() {
                     )}
 
                     <div className="flex justify-end pt-1">
-                      <button type="submit" disabled={adding} className={primaryBtnCls}>
-                        {adding && <Spinner />}
+                      <Button type="submit" loading={adding} disabled={adding}>
                         {adding ? t.common.saving : t.payments.addPayment}
-                      </button>
+                      </Button>
                     </div>
                   </form>
                 </div>
@@ -609,18 +607,14 @@ export default function PaymentsPage() {
                       ))}
                     </select>
                   </div>
-                  <button
-                    onClick={fetchHistory}
-                    disabled={histLoading}
-                    className={ghostBtnCls}
-                  >
-                    {histLoading ? <Spinner /> : (
+                  <Button variant="ghost" onClick={fetchHistory} loading={histLoading} disabled={histLoading}>
+                    {!histLoading && (
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
                       </svg>
                     )}
                     {t.common.refresh}
-                  </button>
+                  </Button>
                 </div>
               </div>
 
@@ -651,17 +645,22 @@ export default function PaymentsPage() {
                 {histError && <div className="p-5"><ErrorPill message={histError} /></div>}
 
                 {histLoading ? (
-                  <div className="flex items-center justify-center gap-2 py-14 text-gray-400">
-                    <Spinner size="md" />
-                    <span className="text-sm">{t.payments.loadingPayments}</span>
-                  </div>
+                  <table className="w-full text-sm">
+                    <tbody>
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <TableRowSkeleton key={i} widths={[150, 100, 90, 90, 100]} />
+                      ))}
+                    </tbody>
+                  </table>
                 ) : histRecords.length === 0 && !histError ? (
-                  <div className="flex flex-col items-center justify-center py-14 text-gray-400">
-                    <svg className="w-9 h-9 mb-3 text-gray-300" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z" />
-                    </svg>
-                    <p className="text-sm">{t.payments.noPayments}</p>
-                  </div>
+                  <EmptyState
+                    icon={
+                      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z" />
+                      </svg>
+                    }
+                    title={t.payments.noPayments}
+                  />
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
@@ -799,13 +798,12 @@ export default function PaymentsPage() {
               </div>
               {editError && <ErrorPill message={editError} />}
               <div className="flex justify-end gap-3 pt-1">
-                <button type="button" onClick={closeEdit} className={ghostBtnCls}>
+                <Button type="button" variant="ghost" onClick={closeEdit}>
                   {t.common.cancel}
-                </button>
-                <button type="submit" disabled={editSaving} className={primaryBtnCls}>
-                  {editSaving && <Spinner />}
+                </Button>
+                <Button type="submit" loading={editSaving} disabled={editSaving}>
                   {editSaving ? t.common.saving : t.common.saveChanges}
-                </button>
+                </Button>
               </div>
             </form>
           </ModalCard>
@@ -833,15 +831,16 @@ export default function PaymentsPage() {
               </div>
             </div>
             <div className="flex justify-end gap-3 mt-6">
-              <button onClick={() => setDeleteConfirmId(null)} className={ghostBtnCls}>
+              <Button variant="ghost" onClick={() => setDeleteConfirmId(null)}>
                 {t.common.cancel}
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="primary"
                 onClick={() => handleDelete(deleteConfirmId)}
-                className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors"
+                className="!bg-red-600 hover:!bg-red-700 active:!bg-red-800 focus-visible:!ring-red-500"
               >
                 {t.payments.deletePayment}
-              </button>
+              </Button>
             </div>
           </ModalCard>
         </Backdrop>

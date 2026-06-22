@@ -238,7 +238,7 @@ export default function TelegramPage() {
                   value={tokenInput}
                   onChange={(e) => setTokenInput(e.target.value)}
                   placeholder="1234567890:ABCdefGHIjklmNOPqrstUVwxyz"
-                  className="w-full px-4 py-2.5 pr-12 border border-gray-300 rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                  className="w-full px-4 py-2.5 pr-12 border border-gray-300 rounded-xl text-sm font-mono text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
                 />
                 <button
                   type="button"
@@ -276,7 +276,7 @@ export default function TelegramPage() {
                 value={chatIdInput}
                 onChange={(e) => setChatIdInput(e.target.value)}
                 placeholder={t.telegram.chatIdPlaceholder}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm font-mono text-gray-900 placeholder:text-gray-400 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
               <p className="mt-1.5 text-xs text-gray-400">
                 Send <code className="bg-gray-100 px-1 rounded">/start</code> to your bot, then use{" "}

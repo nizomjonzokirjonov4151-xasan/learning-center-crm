@@ -2,6 +2,10 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "@/lib/i18n/useTranslation";
+import { SearchInput } from "@/app/components/ui/SearchInput";
+import { EmptyState } from "@/app/components/ui/EmptyState";
+import { TableRowSkeleton } from "@/app/components/ui/Skeleton";
+import { Button } from "@/app/components/ui/Button";
 
 type Teacher = {
   id: string;
@@ -16,12 +20,8 @@ type Teacher = {
 // ── Style constants ──────────────────────────────────────────────────────────
 
 const inputCls =
-  "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none";
+  "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 bg-white shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none";
 const labelCls = "block text-sm font-medium text-gray-700 mb-1";
-const primaryBtnCls =
-  "inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed transition-colors";
-const ghostBtnCls =
-  "inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed transition-colors";
 
 // ── Sub-components ───────────────────────────────────────────────────────────
 
@@ -340,10 +340,9 @@ export default function TeachersPage() {
               </div>
               {addError && <ErrorPill message={addError} />}
               <div className="flex justify-end">
-                <button type="submit" disabled={adding} className={primaryBtnCls}>
-                  {adding && <Spinner />}
+                <Button type="submit" loading={adding} disabled={adding}>
                   {adding ? t.teachers.adding : t.teachers.addTeacher}
-                </button>
+                </Button>
               </div>
             </form>
           </div>
@@ -359,48 +358,35 @@ export default function TeachersPage() {
                   </span>
                 )}
               </h2>
-              <div className="relative">
-                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-                </svg>
-                <input
-                  type="text"
-                  placeholder={t.teachers.searchPlaceholder}
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="pl-9 pr-4 py-2 text-sm rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none w-52"
-                />
-                {search && (
-                  <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                )}
-              </div>
+              <SearchInput value={search} onChange={setSearch} placeholder={t.teachers.searchPlaceholder} className="w-56" />
             </div>
 
             {listError && <div className="p-5"><ErrorPill message={listError} /></div>}
 
             {loading ? (
-              <div className="flex items-center justify-center gap-2 py-16 text-gray-400">
-                <Spinner size="md" />
-                <span className="text-sm">{t.teachers.loading}</span>
-              </div>
+              <table className="w-full text-sm">
+                <tbody>
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <TableRowSkeleton key={i} widths={[160, 100, 90, 90, 80, 90, 110]} />
+                  ))}
+                </tbody>
+              </table>
             ) : filtered.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 text-gray-400">
-                <svg className="w-10 h-10 mb-3 text-gray-300" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.627 48.627 0 0 1 12 20.904a48.627 48.627 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.57 50.57 0 0 0-2.658-.813A59.905 59.905 0 0 1 12 3.493a59.902 59.902 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0 1 12 13.489a50.702 50.702 0 0 1 3.741-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5" />
-                </svg>
-                <p className="text-sm">
-                  {query ? t.teachers.noTeachersMatch : t.teachers.noTeachers}
-                </p>
-                {query && (
-                  <button onClick={() => setSearch("")} className="mt-2 text-sm text-blue-600 hover:underline">
-                    {t.common.clearSearch}
-                  </button>
-                )}
-              </div>
+              <EmptyState
+                icon={
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.627 48.627 0 0 1 12 20.904a48.627 48.627 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.57 50.57 0 0 0-2.658-.813A59.905 59.905 0 0 1 12 3.493a59.902 59.902 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0 1 12 13.489a50.702 50.702 0 0 1 3.741-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5" />
+                  </svg>
+                }
+                title={query ? t.teachers.noTeachersMatch : t.teachers.noTeachers}
+                action={
+                  query && (
+                    <button onClick={() => setSearch("")} className="text-sm text-blue-600 hover:underline">
+                      {t.common.clearSearch}
+                    </button>
+                  )
+                }
+              />
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -444,12 +430,12 @@ export default function TeachersPage() {
                             </span>
                           ) : (
                             <div className="flex items-center gap-2">
-                              <button onClick={() => openEdit(teacher)} className="inline-flex items-center rounded border border-gray-200 px-2.5 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors">
+                              <Button size="sm" variant="ghost" onClick={() => openEdit(teacher)}>
                                 {t.common.edit}
-                              </button>
-                              <button onClick={() => setDeleteConfirmId(teacher.id)} className="inline-flex items-center rounded border border-red-200 px-2.5 py-1 text-xs font-medium text-red-600 hover:bg-red-50 transition-colors">
+                              </Button>
+                              <Button size="sm" variant="danger" onClick={() => setDeleteConfirmId(teacher.id)}>
                                 {t.common.delete}
-                              </button>
+                              </Button>
                             </div>
                           )}
                         </td>
@@ -499,11 +485,10 @@ export default function TeachersPage() {
               </div>
               {editError && <ErrorPill message={editError} />}
               <div className="flex justify-end gap-3 pt-1">
-                <button type="button" onClick={closeEdit} className={ghostBtnCls}>{t.common.cancel}</button>
-                <button type="submit" disabled={editSaving} className={primaryBtnCls}>
-                  {editSaving && <Spinner />}
+                <Button type="button" variant="ghost" onClick={closeEdit}>{t.common.cancel}</Button>
+                <Button type="submit" loading={editSaving} disabled={editSaving}>
                   {editSaving ? t.common.saving : t.common.saveChanges}
-                </button>
+                </Button>
               </div>
             </form>
           </ModalCard>
@@ -529,13 +514,14 @@ export default function TeachersPage() {
               </div>
             </div>
             <div className="flex justify-end gap-3 mt-6">
-              <button onClick={() => setDeleteConfirmId(null)} className={ghostBtnCls}>{t.common.cancel}</button>
-              <button
+              <Button variant="ghost" onClick={() => setDeleteConfirmId(null)}>{t.common.cancel}</Button>
+              <Button
+                variant="primary"
                 onClick={() => handleDelete(deleteConfirmId)}
-                className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors"
+                className="!bg-red-600 hover:!bg-red-700 active:!bg-red-800 focus-visible:!ring-red-500"
               >
                 {t.teachers.deleteTeacher}
-              </button>
+              </Button>
             </div>
           </ModalCard>
         </Backdrop>

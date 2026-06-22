@@ -337,14 +337,14 @@ export default function ReportsPage() {
                 className="flex items-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-xl transition-colors"
               >
                 {icons.download}
-                All PDFs
+                {t.reports.downloadAllPdfs}
               </button>
               <button
                 onClick={() => EXCEL_REPORTS.forEach((c) => handleDownload(c))}
                 className="flex items-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-xl transition-colors"
               >
                 {icons.download}
-                All Excel
+                {t.reports.downloadAllExcel}
               </button>
             </div>
           </div>

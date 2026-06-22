@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "@/lib/i18n/useTranslation";
+import { SearchInput } from "@/app/components/ui/SearchInput";
 
 type StudentOption = { id: string; fullName: string; phone: string; group?: { name: string } | null };
 type ParentStudent = { id: string; fullName: string; phone: string; group?: { id: string; name: string } | null };
@@ -17,7 +18,7 @@ type Parent = {
   students: ParentStudent[];
 };
 
-const inputCls = "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none";
+const inputCls = "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 bg-white shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none";
 const labelCls = "block text-sm font-medium text-gray-700 mb-1";
 const primaryBtnCls = "inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors";
 const ghostBtnCls = "inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors";
@@ -321,13 +322,7 @@ export default function ParentsPage() {
                   <span className="ml-2 text-sm font-normal text-gray-400">({filtered.length})</span>
                 )}
               </h2>
-              <div className="relative">
-                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-                </svg>
-                <input type="text" placeholder={t.parents.searchPlaceholder} value={search} onChange={(e) => setSearch(e.target.value)}
-                  className="pl-9 pr-4 py-2 text-sm rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none w-52" />
-              </div>
+              <SearchInput value={search} onChange={setSearch} placeholder={t.parents.searchPlaceholder} className="w-56" />
             </div>
 
             {listError && <div className="p-5"><ErrorPill message={listError} /></div>}
