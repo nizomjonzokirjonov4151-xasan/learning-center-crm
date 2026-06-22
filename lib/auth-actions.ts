@@ -19,6 +19,8 @@ export async function login(
     return { error: "Email and password are required." };
   }
 
+  console.log("[login][debug] email received:", email);
+
   let shouldRedirect = false;
   try {
     const user = await prisma.user.findUnique({
@@ -35,11 +37,14 @@ export async function login(
       },
     });
 
+    console.log("[login][debug] user found:", !!user, user ? { id: user.id, role: user.role, isActive: user.isActive } : null);
+
     if (!user) {
       return { error: "Invalid email or password." };
     }
 
     const valid = await bcrypt.compare(password, user.password);
+    console.log("[login][debug] password comparison result:", valid);
     if (!valid) {
       return { error: "Invalid email or password." };
     }
@@ -85,7 +90,15 @@ export async function login(
 
     shouldRedirect = true;
   } catch (err) {
-    console.error("[login]", err);
+    console.error("[login][debug] exact thrown error:", err);
+    if (err instanceof Error) {
+      console.error("[login][debug] error name:", err.name, "message:", err.message, "stack:", err.stack);
+    }
+    console.error("LOGIN ERROR:", err);
+    console.error(
+      "LOGIN ERROR JSON:",
+      JSON.stringify(err, Object.getOwnPropertyNames(err))
+    );
     return { error: "Something went wrong. Please try again." };
   }
 
