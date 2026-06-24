@@ -7,7 +7,7 @@ import { LanguageSwitcher } from "@/app/components/LanguageSwitcher";
 type SessionUser = {
   fullName: string;
   email: string;
-  role: "ADMIN" | "MANAGER" | "TEACHER";
+  role: "ADMIN" | "RECEPTION" | "ACCOUNTANT";
 };
 
 export default function AppShell({

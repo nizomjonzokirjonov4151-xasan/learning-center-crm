@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import { SearchInput } from "@/app/components/ui/SearchInput";
+import { PasswordInput } from "@/app/components/ui/PasswordInput";
 
 type StudentOption = { id: string; fullName: string; phone: string; group?: { name: string } | null };
 type ParentStudent = { id: string; fullName: string; phone: string; group?: { id: string; name: string } | null };
@@ -447,7 +448,7 @@ export default function ParentsPage() {
               </div>
               <div>
                 <label className={labelCls}>{t.parents.tempPassword} <span className="text-red-500">*</span></label>
-                <input type="password" placeholder={t.parents.minChars} value={createForm.password}
+                <PasswordInput autoComplete="new-password" placeholder={t.parents.minChars} value={createForm.password}
                   onChange={(e) => setCreateForm((p) => ({ ...p, password: e.target.value }))} required minLength={6} className={inputCls} />
               </div>
               <div>
@@ -552,7 +553,7 @@ export default function ParentsPage() {
             <form onSubmit={handleResetPassword} className="space-y-4">
               <div>
                 <label className={labelCls}>{t.parents.newPassword} <span className="text-red-500">*</span></label>
-                <input type="password" placeholder={t.parents.minChars} value={resetPwd}
+                <PasswordInput autoComplete="new-password" placeholder={t.parents.minChars} value={resetPwd}
                   onChange={(e) => setResetPwd(e.target.value)} required minLength={6} autoFocus className={inputCls} />
               </div>
               {resetError && <ErrorPill message={resetError} />}

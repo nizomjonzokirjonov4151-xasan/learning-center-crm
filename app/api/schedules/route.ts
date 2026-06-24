@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireSession } from "@/lib/api-auth";
 
 export async function GET() {
+  const auth = await requireSession(["ADMIN", "RECEPTION"]);
+  if (auth instanceof NextResponse) return auth;
   try {
     const schedules = await prisma.schedule.findMany({
       include: { group: true, teacher: true },
@@ -18,6 +21,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const auth = await requireSession(["ADMIN", "RECEPTION"]);
+  if (auth instanceof NextResponse) return auth;
   try {
     const body = await request.json();
     const { groupId, teacherId, dayOfWeek, startTime, endTime, room } = body;

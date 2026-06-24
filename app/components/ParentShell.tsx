@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import ParentSidebar from "@/app/components/ParentSidebar";
 import { LanguageSwitcher } from "@/app/components/LanguageSwitcher";
+import { NotificationBell } from "@/app/components/NotificationBell";
 
 type ParentShellUser = { fullName: string; email: string };
 
@@ -47,7 +48,8 @@ export default function ParentShell({
             </div>
             <span className="text-sm font-semibold text-gray-900">Parent Portal</span>
           </div>
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-1">
+            <NotificationBell href="/parent/notifications" color="emerald" />
             <LanguageSwitcher />
           </div>
         </header>

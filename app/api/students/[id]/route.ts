@@ -17,7 +17,7 @@ const studentInclude = {
 export async function PUT(request: NextRequest, { params }: Params) {
   try {
     const session = await getSession();
-    if (!session || session.role === "TEACHER" || session.role === "PARENT") {
+    if (!session || (session.role !== "ADMIN" && session.role !== "RECEPTION")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
     const { id } = await params;
@@ -44,7 +44,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
 export async function DELETE(_request: NextRequest, { params }: Params) {
   try {
     const session = await getSession();
-    if (!session || session.role === "TEACHER" || session.role === "PARENT") {
+    if (!session || (session.role !== "ADMIN" && session.role !== "RECEPTION")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
     const { id } = await params;

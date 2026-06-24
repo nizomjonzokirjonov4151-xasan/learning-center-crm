@@ -18,6 +18,8 @@ enum UserRole {
   MANAGER
   TEACHER
   PARENT
+  RECEPTION
+  ACCOUNTANT
 }
 
 model User {
@@ -25,7 +27,8 @@ model User {
   fullName            String
   email               String          @unique
   password            String
-  role                UserRole        @default(MANAGER)
+  phone               String?
+  role                UserRole        @default(RECEPTION)
   isActive            Boolean         @default(true)
   forcePasswordChange Boolean         @default(false)
   createdAt           DateTime        @default(now())
@@ -34,6 +37,7 @@ model User {
   loginActivities     LoginActivity[]
   userSessions        UserSession[]
   parent              Parent?
+  notifications       Notification[]
 }
 
 model Parent {
@@ -121,17 +125,23 @@ model Payment {
   student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
 }
 
+enum SalaryType {
+  FIXED
+  PERCENTAGE
+}
+
 model Teacher {
-  id        String     @id @default(cuid())
-  fullName  String
-  phone     String
-  subject   String
-  salary    Float
-  isActive  Boolean    @default(true)
-  createdAt DateTime   @default(now())
-  groups    Group[]
-  schedules Schedule[]
-  user      User?
+  id          String     @id @default(cuid())
+  fullName    String
+  phone       String
+  subject     String
+  salaryType  SalaryType @default(FIXED)
+  salaryValue Float?
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  groups      Group[]
+  schedules   Schedule[]
+  user        User?
 }
 
 model Room {
@@ -163,4 +173,24 @@ model BotSettings {
   adminChatId String   @default("")
   isActive    Boolean  @default(false)
   updatedAt   DateTime @updatedAt
+}
+
+enum NotificationType {
+  PAYMENT
+  ATTENDANCE
+  SALARY
+  GENERAL
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType @default(GENERAL)
+  title     String
+  body      String
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  @@index([userId, isRead])
 }

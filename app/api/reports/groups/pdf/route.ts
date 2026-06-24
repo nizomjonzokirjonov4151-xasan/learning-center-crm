@@ -1,7 +1,11 @@
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { buildPdf } from "@/lib/report-pdf";
+import { requireSession } from "@/lib/api-auth";
 
 export async function GET() {
+  const auth = await requireSession(["ADMIN", "RECEPTION"]);
+  if (auth instanceof NextResponse) return auth;
   try {
     const groups = await prisma.group.findMany({
       include: { _count: { select: { students: true } } },

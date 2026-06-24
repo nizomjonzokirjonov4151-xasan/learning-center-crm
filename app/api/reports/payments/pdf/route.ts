@@ -1,5 +1,7 @@
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { buildPdf } from "@/lib/report-pdf";
+import { requireSession } from "@/lib/api-auth";
 
 const MONTHS = [
   "Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -7,6 +9,8 @@ const MONTHS = [
 ];
 
 export async function GET() {
+  const auth = await requireSession(["ADMIN", "RECEPTION", "ACCOUNTANT"]);
+  if (auth instanceof NextResponse) return auth;
   try {
     const payments = await prisma.payment.findMany({
       include: { student: { select: { fullName: true } } },

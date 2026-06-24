@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import AppShell from "@/app/components/AppShell";
 import ParentShell from "@/app/components/ParentShell";
+import TeacherShell from "@/app/components/TeacherShell";
 import { getSession } from "@/lib/dal";
 import { I18nProvider } from "@/lib/i18n/provider";
 
@@ -42,6 +43,12 @@ export default async function RootLayout({
               >
                 {children}
               </ParentShell>
+            ) : session.role === "TEACHER" ? (
+              <TeacherShell
+                user={{ fullName: session.fullName, email: session.email }}
+              >
+                {children}
+              </TeacherShell>
             ) : (
               <AppShell
                 user={{

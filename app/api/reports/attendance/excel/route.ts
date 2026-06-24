@@ -1,5 +1,7 @@
 import ExcelJS from "exceljs";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireSession } from "@/lib/api-auth";
 
 const BLUE = "FF1E40AF";
 const BLUE_LIGHT = "FFDBEAFE";
@@ -22,6 +24,8 @@ function statusColor(status: string): string {
 }
 
 export async function GET() {
+  const auth = await requireSession(["ADMIN", "RECEPTION"]);
+  if (auth instanceof NextResponse) return auth;
   try {
     const records = await prisma.attendance.findMany({
       include: {

@@ -1,5 +1,7 @@
 import ExcelJS from "exceljs";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireSession } from "@/lib/api-auth";
 
 const BLUE = "FF1E40AF";
 const BLUE_LIGHT = "FFDBEAFE";
@@ -18,6 +20,8 @@ function borderAll(): Partial<ExcelJS.Borders> {
 }
 
 export async function GET() {
+  const auth = await requireSession(["ADMIN", "RECEPTION", "ACCOUNTANT"]);
+  if (auth instanceof NextResponse) return auth;
   try {
     const payments = await prisma.payment.findMany({
       include: { student: { select: { fullName: true } } },

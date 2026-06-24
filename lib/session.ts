@@ -7,7 +7,7 @@ const encodedKey = new TextEncoder().encode(secretKey);
 
 export type SessionPayload = {
   userId: string;
-  role: "ADMIN" | "MANAGER" | "TEACHER" | "PARENT";
+  role: "ADMIN" | "TEACHER" | "PARENT" | "RECEPTION" | "ACCOUNTANT";
   fullName: string;
   email: string;
   teacherId: string | null;

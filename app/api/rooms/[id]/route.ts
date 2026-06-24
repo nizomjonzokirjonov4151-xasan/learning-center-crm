@@ -1,9 +1,12 @@
 import { NextResponse, NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireSession } from "@/lib/api-auth";
 
 type Params = { params: Promise<{ id: string }> };
 
 export async function PUT(request: NextRequest, { params }: Params) {
+  const auth = await requireSession(["ADMIN", "RECEPTION"]);
+  if (auth instanceof NextResponse) return auth;
   try {
     const { id } = await params;
     const body = await request.json();
@@ -48,6 +51,8 @@ export async function PUT(request: NextRequest, { params }: Params) {
 }
 
 export async function DELETE(_request: NextRequest, { params }: Params) {
+  const auth = await requireSession(["ADMIN", "RECEPTION"]);
+  if (auth instanceof NextResponse) return auth;
   try {
     const { id } = await params;
 

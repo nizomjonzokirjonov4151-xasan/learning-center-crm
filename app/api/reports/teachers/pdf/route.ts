@@ -1,7 +1,11 @@
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { buildPdf } from "@/lib/report-pdf";
+import { requireSession } from "@/lib/api-auth";
 
 export async function GET() {
+  const auth = await requireSession(["ADMIN", "RECEPTION", "ACCOUNTANT"]);
+  if (auth instanceof NextResponse) return auth;
   try {
     const now = new Date();
     const currentMonth = now.getMonth() + 1;
@@ -27,7 +31,9 @@ export async function GET() {
     });
 
     const active = teachers.filter((t) => t.isActive).length;
-    const totalBaseSalary = teachers.filter((t) => t.isActive).reduce((s, t) => s + t.salary, 0);
+    const totalBaseSalary = teachers
+      .filter((t) => t.isActive && t.salaryType === "FIXED")
+      .reduce((s, t) => s + (t.salaryValue ?? 0), 0);
 
     type TeacherRow = { teacherPercent: number; revenue: number };
     const enriched = teachers.map((t) => {
@@ -76,7 +82,9 @@ export async function GET() {
         t.fullName,
         t.phone,
         t.subject,
-        fmt(t.salary),
+        t.salaryType === "PERCENTAGE"
+          ? `${t.salaryValue ?? 0}% comm.`
+          : t.salaryValue != null ? fmt(t.salaryValue) : "—",
         String(t.groupCount),
         t.groupCount > 0 ? `${t.avgCommission}%` : "—",
         t.isActive ? fmt(t.totalEarned) : "—",

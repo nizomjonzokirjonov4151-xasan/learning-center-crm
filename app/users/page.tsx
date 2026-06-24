@@ -3,21 +3,27 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import { SearchInput } from "@/app/components/ui/SearchInput";
+import { PasswordInput } from "@/app/components/ui/PasswordInput";
 
-type UserRole = "ADMIN" | "MANAGER" | "TEACHER";
+type UserRole = "ADMIN" | "RECEPTION" | "ACCOUNTANT" | "TEACHER";
+type SalaryType = "FIXED" | "PERCENTAGE";
+// Creatable from this page; TEACHER accounts are created from the Teachers page (with full login setup).
+type CreatableRole = "ADMIN" | "RECEPTION" | "ACCOUNTANT";
 
 type TeacherInfo = {
   id: string;
   fullName: string;
   subject: string;
   phone: string;
-  salary: number;
+  salaryType: SalaryType;
+  salaryValue: number | null;
 };
 
 type User = {
   id: string;
   fullName: string;
   email: string;
+  phone: string | null;
   role: UserRole;
   isActive: boolean;
   createdAt: string;
@@ -40,7 +46,8 @@ const dangerBtnCls =
 
 const ROLE_COLORS: Record<UserRole, string> = {
   ADMIN: "bg-violet-50 text-violet-700 border-violet-200",
-  MANAGER: "bg-blue-50 text-blue-700 border-blue-200",
+  RECEPTION: "bg-blue-50 text-blue-700 border-blue-200",
+  ACCOUNTANT: "bg-amber-50 text-amber-700 border-amber-200",
   TEACHER: "bg-emerald-50 text-emerald-700 border-emerald-200",
 };
 
@@ -94,10 +101,9 @@ function Th({ children }: { children: React.ReactNode }) {
 // ── Empty forms ──────────────────────────────────────────────────────────────
 
 const EMPTY_CREATE = {
-  fullName: "", email: "", password: "", role: "ADMIN" as UserRole,
-  phone: "", subject: "", salary: "",
+  fullName: "", email: "", password: "", role: "ADMIN" as CreatableRole, phone: "",
 };
-const EMPTY_EDIT = { fullName: "", email: "", role: "ADMIN" as UserRole, isActive: true };
+const EMPTY_EDIT = { fullName: "", email: "", phone: "", role: "ADMIN" as UserRole, isActive: true };
 
 // ── Main Page ────────────────────────────────────────────────────────────────
 
@@ -106,7 +112,8 @@ export default function UsersPage() {
 
   const ROLE_LABELS: Record<UserRole, string> = {
     ADMIN: t.users.roleAdmin,
-    MANAGER: t.users.roleManager,
+    RECEPTION: t.users.roleReception,
+    ACCOUNTANT: t.users.roleAccountant,
     TEACHER: t.users.roleTeacher,
   };
 
@@ -207,7 +214,7 @@ export default function UsersPage() {
 
   function openEdit(u: User) {
     setEditingUser(u);
-    setEditForm({ fullName: u.fullName, email: u.email, role: u.role, isActive: u.isActive });
+    setEditForm({ fullName: u.fullName, email: u.email, phone: u.phone ?? "", role: u.role, isActive: u.isActive });
     setEditError(null);
   }
 
@@ -492,13 +499,14 @@ export default function UsersPage() {
                 <label className={labelCls}>{t.users.roleColumn} <span className="text-red-500">*</span></label>
                 <select
                   value={createForm.role}
-                  onChange={(e) => setCreateForm((p) => ({ ...p, role: e.target.value as UserRole }))}
+                  onChange={(e) => setCreateForm((p) => ({ ...p, role: e.target.value as CreatableRole }))}
                   className={inputCls}
                 >
                   <option value="ADMIN">{t.users.roleAdmin}</option>
-                  <option value="MANAGER">{t.users.roleManager}</option>
-                  <option value="TEACHER">{t.users.roleTeacher}</option>
+                  <option value="RECEPTION">{t.users.roleReception}</option>
+                  <option value="ACCOUNTANT">{t.users.roleAccountant}</option>
                 </select>
+                <p className="mt-1.5 text-xs text-gray-400">{t.users.teacherParentHint}</p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -526,8 +534,8 @@ export default function UsersPage() {
                 </div>
                 <div className="sm:col-span-2">
                   <label className={labelCls}>{t.users.tempPassword} <span className="text-red-500">*</span></label>
-                  <input
-                    type="password"
+                  <PasswordInput
+                    autoComplete="new-password"
                     placeholder={t.users.minChars}
                     value={createForm.password}
                     onChange={(e) => setCreateForm((p) => ({ ...p, password: e.target.value }))}
@@ -537,53 +545,17 @@ export default function UsersPage() {
                   />
                 </div>
 
-                {/* Teacher-specific fields */}
-                {createForm.role === "TEACHER" && (
-                  <>
-                    <div>
-                      <label className={labelCls}>{t.students.phone} <span className="text-red-500">*</span></label>
-                      <input
-                        type="tel"
-                        placeholder="+998901234567"
-                        value={createForm.phone}
-                        onChange={(e) => setCreateForm((p) => ({ ...p, phone: e.target.value }))}
-                        required
-                        className={inputCls}
-                      />
-                    </div>
-                    <div>
-                      <label className={labelCls}>{t.teachers.subject} <span className="text-red-500">*</span></label>
-                      <input
-                        type="text"
-                        placeholder={t.users.subjectPlaceholder}
-                        value={createForm.subject}
-                        onChange={(e) => setCreateForm((p) => ({ ...p, subject: e.target.value }))}
-                        required
-                        className={inputCls}
-                      />
-                    </div>
-                    <div className="sm:col-span-2">
-                      <label className={labelCls}>{t.users.salaryLabel} <span className="text-red-500">*</span></label>
-                      <input
-                        type="number"
-                        min="0"
-                        step="any"
-                        placeholder={t.users.salaryPlaceholder}
-                        value={createForm.salary}
-                        onChange={(e) => setCreateForm((p) => ({ ...p, salary: e.target.value }))}
-                        required
-                        className={inputCls}
-                      />
-                    </div>
-                  </>
-                )}
+                <div className="sm:col-span-2">
+                  <label className={labelCls}>{t.students.phone}</label>
+                  <input
+                    type="tel"
+                    placeholder="+998901234567"
+                    value={createForm.phone}
+                    onChange={(e) => setCreateForm((p) => ({ ...p, phone: e.target.value }))}
+                    className={inputCls}
+                  />
+                </div>
               </div>
-
-              {createForm.role === "TEACHER" && (
-                <p className="text-xs text-gray-500 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2">
-                  {t.users.teacherNote}
-                </p>
-              )}
 
               {createError && <ErrorPill message={createError} />}
 
@@ -637,16 +609,30 @@ export default function UsersPage() {
                 />
               </div>
               <div>
+                <label className={labelCls}>{t.students.phone}</label>
+                <input
+                  type="tel"
+                  value={editForm.phone}
+                  onChange={(e) => setEditForm((p) => ({ ...p, phone: e.target.value }))}
+                  className={inputCls}
+                />
+              </div>
+              <div>
                 <label className={labelCls}>{t.users.roleColumn}</label>
                 <select
                   value={editForm.role}
                   onChange={(e) => setEditForm((p) => ({ ...p, role: e.target.value as UserRole }))}
+                  disabled={editForm.role === "TEACHER"}
                   className={inputCls}
                 >
                   <option value="ADMIN">{t.users.roleAdmin}</option>
-                  <option value="MANAGER">{t.users.roleManager}</option>
-                  <option value="TEACHER">{t.users.roleTeacher}</option>
+                  <option value="RECEPTION">{t.users.roleReception}</option>
+                  <option value="ACCOUNTANT">{t.users.roleAccountant}</option>
+                  {editForm.role === "TEACHER" && <option value="TEACHER">{t.users.roleTeacher}</option>}
                 </select>
+                {editForm.role === "TEACHER" && (
+                  <p className="mt-1.5 text-xs text-gray-400">{t.users.editTeacherOnTeachersPage}</p>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <input
@@ -689,8 +675,8 @@ export default function UsersPage() {
             <form onSubmit={handleResetPassword} className="space-y-4">
               <div>
                 <label className={labelCls}>{t.users.newPassword} <span className="text-red-500">*</span></label>
-                <input
-                  type="password"
+                <PasswordInput
+                  autoComplete="new-password"
                   placeholder={t.users.minChars}
                   value={resetPassword}
                   onChange={(e) => setResetPassword(e.target.value)}

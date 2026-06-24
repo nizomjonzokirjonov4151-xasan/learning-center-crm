@@ -6,7 +6,7 @@ type Params = { params: Promise<{ id: string }> };
 
 export async function PUT(request: NextRequest, { params }: Params) {
   const session = await getSession();
-  if (!session || !["ADMIN", "MANAGER"].includes(session.role)) {
+  if (!session || !["ADMIN", "RECEPTION"].includes(session.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   try {

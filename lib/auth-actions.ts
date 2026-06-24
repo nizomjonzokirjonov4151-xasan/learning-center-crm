@@ -75,10 +75,13 @@ export async function login(
       parentId = parent?.id ?? null;
     }
 
+    // Legacy MANAGER accounts are migrated to RECEPTION; normalize defensively in case any remain.
+    const role = user.role === "MANAGER" ? "RECEPTION" : user.role;
+
     await createSession(
       {
         userId: user.id,
-        role: user.role,
+        role,
         fullName: user.fullName,
         email: user.email,
         teacherId: user.teacherId ?? null,

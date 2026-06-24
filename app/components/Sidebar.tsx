@@ -9,14 +9,14 @@ import { LanguageSwitcher } from "@/app/components/LanguageSwitcher";
 type SidebarUser = {
   fullName: string;
   email: string;
-  role: "ADMIN" | "MANAGER" | "TEACHER";
+  role: "ADMIN" | "RECEPTION" | "ACCOUNTANT";
 };
 
 
 const ROLE_COLORS: Record<string, string> = {
   ADMIN: "bg-violet-100 text-violet-700",
-  MANAGER: "bg-blue-100 text-blue-700",
-  TEACHER: "bg-emerald-100 text-emerald-700",
+  RECEPTION: "bg-blue-100 text-blue-700",
+  ACCOUNTANT: "bg-amber-100 text-amber-700",
 };
 
 import type { Translations } from "@/lib/i18n";
@@ -24,7 +24,7 @@ import type { Translations } from "@/lib/i18n";
 type NavItemDef = {
   href: string;
   labelKey: keyof Translations["nav"];
-  roles: Array<"ADMIN" | "MANAGER" | "TEACHER">;
+  roles: Array<"ADMIN" | "RECEPTION" | "ACCOUNTANT">;
   icon: React.ReactNode;
   section: "overview" | "academics" | "finance" | "people" | "system";
 };
@@ -35,7 +35,7 @@ const NAV_ITEMS: NavItemDef[] = [
   {
     href: "/",
     labelKey: "dashboard",
-    roles: ["ADMIN", "MANAGER", "TEACHER"],
+    roles: ["ADMIN", "RECEPTION", "ACCOUNTANT"],
     section: "overview",
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -46,7 +46,7 @@ const NAV_ITEMS: NavItemDef[] = [
   {
     href: "/students",
     labelKey: "students",
-    roles: ["ADMIN", "MANAGER"],
+    roles: ["ADMIN", "RECEPTION"],
     section: "academics",
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -57,18 +57,7 @@ const NAV_ITEMS: NavItemDef[] = [
   {
     href: "/groups",
     labelKey: "groups",
-    roles: ["ADMIN", "MANAGER"],
-    section: "academics",
-    icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v8.25A2.25 2.25 0 0 0 4.5 16.5h15a2.25 2.25 0 0 0 2.25-2.25V8.25A2.25 2.25 0 0 0 19.5 6h-5.69a1.5 1.5 0 0 1-1.06-.44Z" />
-      </svg>
-    ),
-  },
-  {
-    href: "/groups",
-    labelKey: "myGroups",
-    roles: ["TEACHER"],
+    roles: ["ADMIN", "RECEPTION"],
     section: "academics",
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -79,7 +68,7 @@ const NAV_ITEMS: NavItemDef[] = [
   {
     href: "/attendance",
     labelKey: "attendance",
-    roles: ["ADMIN", "MANAGER", "TEACHER"],
+    roles: ["ADMIN", "RECEPTION"],
     section: "academics",
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -90,7 +79,7 @@ const NAV_ITEMS: NavItemDef[] = [
   {
     href: "/debtors",
     labelKey: "debtors",
-    roles: ["ADMIN", "MANAGER"],
+    roles: ["ADMIN", "RECEPTION", "ACCOUNTANT"],
     section: "finance",
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -101,7 +90,7 @@ const NAV_ITEMS: NavItemDef[] = [
   {
     href: "/payments",
     labelKey: "payments",
-    roles: ["ADMIN", "MANAGER"],
+    roles: ["ADMIN", "RECEPTION", "ACCOUNTANT"],
     section: "finance",
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -123,7 +112,7 @@ const NAV_ITEMS: NavItemDef[] = [
   {
     href: "/schedules",
     labelKey: "schedules",
-    roles: ["ADMIN", "MANAGER"],
+    roles: ["ADMIN", "RECEPTION"],
     section: "academics",
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -134,7 +123,7 @@ const NAV_ITEMS: NavItemDef[] = [
   {
     href: "/rooms",
     labelKey: "rooms",
-    roles: ["ADMIN", "MANAGER"],
+    roles: ["ADMIN", "RECEPTION"],
     section: "academics",
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -145,7 +134,7 @@ const NAV_ITEMS: NavItemDef[] = [
   {
     href: "/analytics",
     labelKey: "analytics",
-    roles: ["ADMIN", "MANAGER"],
+    roles: ["ADMIN", "RECEPTION", "ACCOUNTANT"],
     section: "system",
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -156,7 +145,7 @@ const NAV_ITEMS: NavItemDef[] = [
   {
     href: "/reports",
     labelKey: "reports",
-    roles: ["ADMIN", "MANAGER"],
+    roles: ["ADMIN", "RECEPTION", "ACCOUNTANT"],
     section: "system",
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -178,7 +167,7 @@ const NAV_ITEMS: NavItemDef[] = [
   {
     href: "/parents",
     labelKey: "parents",
-    roles: ["ADMIN", "MANAGER"],
+    roles: ["ADMIN", "RECEPTION"],
     section: "people",
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -200,7 +189,7 @@ const NAV_ITEMS: NavItemDef[] = [
   {
     href: "/profile/security",
     labelKey: "security",
-    roles: ["ADMIN", "MANAGER", "TEACHER"],
+    roles: ["ADMIN", "RECEPTION", "ACCOUNTANT"],
     section: "system",
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -211,7 +200,7 @@ const NAV_ITEMS: NavItemDef[] = [
   {
     href: "/profile/sessions",
     labelKey: "sessions",
-    roles: ["ADMIN", "MANAGER", "TEACHER"],
+    roles: ["ADMIN", "RECEPTION", "ACCOUNTANT"],
     section: "system",
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -249,8 +238,8 @@ export default function Sidebar({
 
   const ROLE_LABELS_T: Record<string, string> = {
     ADMIN: t.dashboard.administrator,
-    MANAGER: t.dashboard.manager,
-    TEACHER: t.dashboard.teacher,
+    RECEPTION: t.dashboard.reception,
+    ACCOUNTANT: t.dashboard.accountant,
   };
 
   return (

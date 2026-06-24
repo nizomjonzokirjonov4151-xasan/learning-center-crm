@@ -5,14 +5,16 @@ import { decrypt, SESSION_COOKIE } from "@/lib/session";
 const PUBLIC_ROUTES = ["/login", "/setup"];
 
 // Routes blocked per role (ADMIN bypasses all restrictions)
-const BLOCKED_FOR_MANAGER = ["/teachers", "/schedules", "/telegram", "/users", "/parents"];
-const BLOCKED_FOR_TEACHER = [
-  "/students", "/payments", "/teachers", "/telegram",
-  "/debtors", "/users", "/analytics", "/reports", "/parents",
-];
+const BLOCKED_FOR_RECEPTION = ["/teachers", "/schedules", "/telegram", "/users", "/parents"];
 
 // PARENT can only access these prefixes (everything else redirects to /parent/dashboard)
 const ALLOWED_FOR_PARENT = ["/parent", "/profile"];
+
+// TEACHER lives entirely in its own portal (everything else redirects to /teacher/dashboard)
+const ALLOWED_FOR_TEACHER = ["/teacher", "/profile"];
+
+// ACCOUNTANT only sees finance-related surfaces (everything else redirects to /)
+const ALLOWED_FOR_ACCOUNTANT = ["/", "/payments", "/debtors", "/reports", "/analytics", "/profile"];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -33,9 +35,12 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // Authenticated users visiting /login → send to appropriate home
+  // Authenticated users visiting /login → send to their role's home page
   if (pathname === "/login") {
-    const home = session.role === "PARENT" ? "/parent/dashboard" : "/";
+    const home =
+      session.role === "PARENT" ? "/parent/dashboard" :
+      session.role === "TEACHER" ? "/teacher/dashboard" :
+      "/";
     return NextResponse.redirect(new URL(home, request.nextUrl));
   }
 
@@ -53,20 +58,35 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // ── Non-PARENT: block access to /parent/* ──────────────────────────────────
+  // ── TEACHER: whitelist-only access (dedicated Teacher Portal) ──────────────
+  if (session.role === "TEACHER") {
+    const allowed = ALLOWED_FOR_TEACHER.some((r) => pathname === r || pathname.startsWith(r + "/"));
+    if (!allowed) {
+      return NextResponse.redirect(new URL("/teacher/dashboard", request.nextUrl));
+    }
+    return NextResponse.next();
+  }
+
+  // ── ACCOUNTANT: whitelist-only access (finance surfaces) ────────────────────
+  if (session.role === "ACCOUNTANT") {
+    const allowed = ALLOWED_FOR_ACCOUNTANT.some((r) => pathname === r || pathname.startsWith(r + "/"));
+    if (!allowed) {
+      return NextResponse.redirect(new URL("/", request.nextUrl));
+    }
+    return NextResponse.next();
+  }
+
+  // ── Non-PARENT/TEACHER: block access to /parent/* and /teacher/* ───────────
   if (pathname === "/parent" || pathname.startsWith("/parent/")) {
+    return NextResponse.redirect(new URL("/", request.nextUrl));
+  }
+  if (pathname === "/teacher" || pathname.startsWith("/teacher/")) {
     return NextResponse.redirect(new URL("/", request.nextUrl));
   }
 
   // Role-based page access for staff
-  if (session.role === "MANAGER") {
-    if (BLOCKED_FOR_MANAGER.some((r) => pathname.startsWith(r))) {
-      return NextResponse.redirect(new URL("/", request.nextUrl));
-    }
-  }
-
-  if (session.role === "TEACHER") {
-    if (BLOCKED_FOR_TEACHER.some((r) => pathname.startsWith(r))) {
+  if (session.role === "RECEPTION") {
+    if (BLOCKED_FOR_RECEPTION.some((r) => pathname.startsWith(r))) {
       return NextResponse.redirect(new URL("/", request.nextUrl));
     }
   }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { PasswordInput } from "@/app/components/ui/PasswordInput";
 
 export default function SetupPage() {
   const router = useRouter();
@@ -138,8 +139,7 @@ export default function SetupPage() {
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-1.5">Password</label>
-              <input
-                type="password"
+              <PasswordInput
                 required
                 minLength={6}
                 placeholder="At least 6 characters"

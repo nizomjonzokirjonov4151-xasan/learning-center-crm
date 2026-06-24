@@ -54,12 +54,17 @@ export type Translations = {
     student: string
     students: string
     records: string
+    showPassword: string
+    hidePassword: string
   }
   nav: {
     dashboard: string
     students: string
     groups: string
     myGroups: string
+    myStudents: string
+    mySalary: string
+    notifications: string
     attendance: string
     debtors: string
     payments: string
@@ -103,7 +108,8 @@ export type Translations = {
   dashboard: {
     welcomeBack: string
     administrator: string
-    manager: string
+    reception: string
+    accountant: string
     teacher: string
     overview: string
     totalStudents: string
@@ -279,6 +285,7 @@ export type Translations = {
     total: string
     active: string
     addTeacher: string
+    addTeacherHint: string
     fullName: string
     fullNamePlaceholder: string
     phone: string
@@ -286,6 +293,21 @@ export type Translations = {
     subjectPlaceholder: string
     salary: string
     salaryPlaceholder: string
+    salaryType: string
+    salaryTypeFixed: string
+    salaryTypePercentage: string
+    commissionPercentLabel: string
+    salaryOptionalPlaceholder: string
+    commissionSuffix: string
+    emailPlaceholder: string
+    tempPassword: string
+    minChars: string
+    loginColumn: string
+    noLoginYet: string
+    noLoginSetupHint: string
+    resetPassword: string
+    newPassword: string
+    linkedAccountNote: string
     adding: string
     allTeachers: string
     searchPlaceholder: string
@@ -488,7 +510,8 @@ export type Translations = {
     activate: string
     deactivate: string
     roleAdmin: string
-    roleManager: string
+    roleReception: string
+    roleAccountant: string
     roleTeacher: string
     fullName: string
     fullNamePlaceholder: string
@@ -499,6 +522,8 @@ export type Translations = {
     salaryLabel: string
     salaryPlaceholder: string
     teacherNote: string
+    teacherParentHint: string
+    editTeacherOnTeachersPage: string
     accountActive: string
     newPassword: string
     deleteConfirm: string
@@ -678,6 +703,46 @@ export type Translations = {
     personalInfo: string
     phone: string
     memberSince: string
+  }
+  financeDashboard: {
+    overview: string
+    revenueThisMonth: string
+    paymentsThisMonth: string
+    outstandingDebt: string
+    payrollThisMonth: string
+    recentPayments: string
+    topDebtors: string
+    payrollBreakdown: string
+    amountThisMonth: string
+    total: string
+    noPayroll: string
+  }
+  teacherPortal: {
+    portalName: string
+    teacherLabel: string
+    myGroupsTitle: string
+    myGroupsSubtitle: string
+    noGroups: string
+    students: string
+    myStudentsTitle: string
+    myStudentsSubtitle: string
+    noStudents: string
+    myScheduleTitle: string
+    myScheduleSubtitle: string
+    noSchedule: string
+    mySalaryTitle: string
+    mySalarySubtitle: string
+    monthlySalary: string
+    commissionRateLabel: string
+  }
+  notifications: {
+    title: string
+    markAllRead: string
+    empty: string
+    typePAYMENT: string
+    typeATTENDANCE: string
+    typeSALARY: string
+    typeGENERAL: string
   }
 }
 

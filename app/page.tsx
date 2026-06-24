@@ -1,8 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/dal";
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { DashboardCharts, type MonthStudentPoint, type MonthRevenuePoint, type AttendancePoint } from "@/app/components/DashboardCharts";
-import TeacherDashboard from "@/app/components/TeacherDashboard";
+import FinanceDashboard from "@/app/components/FinanceDashboard";
 import { getServerTranslations } from "@/lib/i18n";
 import { getDebtors } from "@/lib/debtors";
 
@@ -12,8 +13,8 @@ async function safe<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
 
 const ROLE_COLORS: Record<string, string> = {
   ADMIN: "bg-violet-100 text-violet-700 border-violet-200",
-  MANAGER: "bg-blue-100 text-blue-700 border-blue-200",
-  TEACHER: "bg-emerald-100 text-emerald-700 border-emerald-200",
+  RECEPTION: "bg-blue-100 text-blue-700 border-blue-200",
+  ACCOUNTANT: "bg-amber-100 text-amber-700 border-amber-200",
 };
 
 const STATUS_STYLES: Record<string, string> = {
@@ -33,13 +34,17 @@ export default async function DashboardPage() {
   const fmt = (n: number) => new Intl.NumberFormat(dateLocale).format(Math.round(n));
 
   if (session?.role === "TEACHER") {
-    return <TeacherDashboard session={session} />;
+    redirect("/teacher/dashboard");
+  }
+
+  if (session?.role === "ACCOUNTANT") {
+    return <FinanceDashboard session={session} />;
   }
 
   const ROLE_LABELS: Record<string, string> = {
     ADMIN: t.dashboard.administrator,
-    MANAGER: t.dashboard.manager,
-    TEACHER: t.dashboard.teacher,
+    RECEPTION: t.dashboard.reception,
+    ACCOUNTANT: t.dashboard.accountant,
   };
 
   const STATUS_LABELS: Record<string, string> = {

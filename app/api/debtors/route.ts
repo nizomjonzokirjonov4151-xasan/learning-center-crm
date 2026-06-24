@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { getDebtors } from "@/lib/debtors";
+import { requireSession } from "@/lib/api-auth";
 
 export async function GET() {
+  const auth = await requireSession(["ADMIN", "RECEPTION", "ACCOUNTANT"]);
+  if (auth instanceof NextResponse) return auth;
   try {
     const debtors = await getDebtors();
     return NextResponse.json(debtors);

@@ -1,9 +1,13 @@
 import { NextResponse, NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireSession } from "@/lib/api-auth";
 
 type Params = { params: Promise<{ id: string }> };
+const FINANCE_ROLES = ["ADMIN", "RECEPTION", "ACCOUNTANT"] as const;
 
 export async function PUT(request: NextRequest, { params }: Params) {
+  const auth = await requireSession([...FINANCE_ROLES]);
+  if (auth instanceof NextResponse) return auth;
   try {
     const { id } = await params;
     const body = await request.json();
@@ -31,6 +35,8 @@ export async function PUT(request: NextRequest, { params }: Params) {
 }
 
 export async function DELETE(_request: NextRequest, { params }: Params) {
+  const auth = await requireSession([...FINANCE_ROLES]);
+  if (auth instanceof NextResponse) return auth;
   try {
     const { id } = await params;
     await prisma.payment.delete({ where: { id } });

@@ -16,12 +16,15 @@ const studentInclude = {
 export async function GET(request: Request) {
   try {
     const session = await getSession();
+    if (!session || session.role === "PARENT") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
     const { searchParams } = new URL(request.url);
     const groupId = searchParams.get("groupId");
 
     // TEACHER sees only their own students (via group assignment)
     const teacherFilter =
-      session?.role === "TEACHER" && session.teacherId
+      session.role === "TEACHER" && session.teacherId
         ? { group: { teacherId: session.teacherId } }
         : {};
 
@@ -46,7 +49,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const session = await getSession();
-    if (!session || session.role === "TEACHER" || session.role === "PARENT") {
+    if (!session || (session.role !== "ADMIN" && session.role !== "RECEPTION")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
     const body = await request.json();

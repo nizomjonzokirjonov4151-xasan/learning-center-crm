@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireSession } from "@/lib/api-auth";
 
 export async function GET() {
+  const auth = await requireSession(["ADMIN", "RECEPTION", "ACCOUNTANT"]);
+  if (auth instanceof NextResponse) return auth;
   try {
     const now = new Date();
 

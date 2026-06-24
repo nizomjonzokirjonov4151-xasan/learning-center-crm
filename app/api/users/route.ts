@@ -3,6 +3,8 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/dal";
 
+const CREATABLE_ROLES = ["ADMIN", "RECEPTION", "ACCOUNTANT"] as const;
+
 export async function GET() {
   const session = await getSession();
   if (!session || session.role !== "ADMIN") {
@@ -15,12 +17,13 @@ export async function GET() {
         id: true,
         fullName: true,
         email: true,
+        phone: true,
         role: true,
         isActive: true,
         createdAt: true,
         teacherId: true,
         teacher: {
-          select: { id: true, fullName: true, subject: true, phone: true, salary: true },
+          select: { id: true, fullName: true, subject: true, phone: true, salaryType: true, salaryValue: true },
         },
         _count: {
           select: { userSessions: true },
@@ -41,7 +44,7 @@ export async function POST(request: Request) {
   }
   try {
     const body = await request.json();
-    const { fullName, email, password, role, phone, subject, salary } = body;
+    const { fullName, email, password, role, phone } = body;
 
     if (!fullName?.trim() || !email?.trim() || !password?.trim() || !role) {
       return NextResponse.json({ error: "fullName, email, password, and role are required." }, { status: 400 });
@@ -49,7 +52,13 @@ export async function POST(request: Request) {
     if (password.length < 6) {
       return NextResponse.json({ error: "Password must be at least 6 characters." }, { status: 400 });
     }
-    if (!["ADMIN", "MANAGER", "TEACHER"].includes(role)) {
+    if (role === "PARENT") {
+      return NextResponse.json({ error: "Parent accounts are created from the Parents page." }, { status: 400 });
+    }
+    if (role === "TEACHER") {
+      return NextResponse.json({ error: "Teacher accounts are created from the Teachers page." }, { status: 400 });
+    }
+    if (!CREATABLE_ROLES.includes(role)) {
       return NextResponse.json({ error: "Invalid role." }, { status: 400 });
     }
 
@@ -60,51 +69,17 @@ export async function POST(request: Request) {
 
     const hashed = await bcrypt.hash(password, 12);
 
-    if (role === "TEACHER") {
-      if (!phone?.trim() || !subject?.trim() || salary == null) {
-        return NextResponse.json(
-          { error: "phone, subject, and salary are required for teacher accounts." },
-          { status: 400 }
-        );
-      }
-      const result = await prisma.$transaction(async (tx) => {
-        const teacher = await tx.teacher.create({
-          data: {
-            fullName: fullName.trim(),
-            phone: phone.trim(),
-            subject: subject.trim(),
-            salary: parseFloat(salary),
-          },
-        });
-        const user = await tx.user.create({
-          data: {
-            fullName: fullName.trim(),
-            email: email.trim().toLowerCase(),
-            password: hashed,
-            role: "TEACHER",
-            teacherId: teacher.id,
-            forcePasswordChange: true,
-          },
-          select: {
-            id: true, fullName: true, email: true, role: true,
-            isActive: true, createdAt: true, teacherId: true,
-            teacher: { select: { id: true, fullName: true, subject: true, phone: true, salary: true } },
-          },
-        });
-        return user;
-      });
-      return NextResponse.json(result, { status: 201 });
-    }
-
     const user = await prisma.user.create({
       data: {
         fullName: fullName.trim(),
         email: email.trim().toLowerCase(),
         password: hashed,
+        phone: phone?.trim() || null,
         role,
+        forcePasswordChange: true,
       },
       select: {
-        id: true, fullName: true, email: true, role: true,
+        id: true, fullName: true, email: true, phone: true, role: true,
         isActive: true, createdAt: true, teacherId: true, teacher: true,
       },
     });

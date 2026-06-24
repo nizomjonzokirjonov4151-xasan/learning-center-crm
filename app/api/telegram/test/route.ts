@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { testConnection } from "@/lib/telegram";
+import { requireSession } from "@/lib/api-auth";
 
 export async function POST(request: Request) {
+  const auth = await requireSession(["ADMIN"]);
+  if (auth instanceof NextResponse) return auth;
   try {
     const { token, chatId } = (await request.json()) as {
       token?: string;

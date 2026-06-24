@@ -6,15 +6,22 @@ import { SearchInput } from "@/app/components/ui/SearchInput";
 import { EmptyState } from "@/app/components/ui/EmptyState";
 import { TableRowSkeleton } from "@/app/components/ui/Skeleton";
 import { Button } from "@/app/components/ui/Button";
+import { PasswordInput } from "@/app/components/ui/PasswordInput";
+
+type SalaryType = "FIXED" | "PERCENTAGE";
+
+type TeacherUser = { id: string; email: string; isActive: boolean; createdAt: string; forcePasswordChange: boolean };
 
 type Teacher = {
   id: string;
   fullName: string;
   phone: string;
   subject: string;
-  salary: number;
+  salaryType: SalaryType;
+  salaryValue: number | null;
   isActive: boolean;
   createdAt: string;
+  user: TeacherUser | null;
 };
 
 // ── Style constants ──────────────────────────────────────────────────────────
@@ -56,7 +63,7 @@ function Backdrop({ onClick, children }: { onClick: () => void; children: React.
 
 function ModalCard({ onClick, children }: { onClick: (e: React.MouseEvent) => void; children: React.ReactNode }) {
   return (
-    <div className="bg-white rounded-xl shadow-xl w-full max-w-lg p-6" onClick={onClick}>
+    <div className="bg-white rounded-xl shadow-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto" onClick={onClick}>
       {children}
     </div>
   );
@@ -102,15 +109,23 @@ function ActiveBadge({
   );
 }
 
-// ── Empty state for add form ─────────────────────────────────────────────────
+// ── Empty state for forms ────────────────────────────────────────────────────
 
-const EMPTY_FORM = { fullName: "", phone: "", subject: "", salary: "" };
+const EMPTY_FORM = {
+  fullName: "", phone: "", subject: "", email: "", password: "",
+  salaryType: "FIXED" as SalaryType, salaryValue: "",
+};
 
 // ── Main Page ────────────────────────────────────────────────────────────────
 
 export default function TeachersPage() {
   const { t, dateLocale } = useTranslation();
-  const formatSalary = (n: number) => new Intl.NumberFormat(dateLocale).format(n) + " UZS";
+  const formatSalary = (teacher: Teacher) => {
+    if (teacher.salaryValue == null) return "—";
+    return teacher.salaryType === "PERCENTAGE"
+      ? `${teacher.salaryValue}% ${t.teachers.commissionSuffix}`
+      : new Intl.NumberFormat(dateLocale).format(teacher.salaryValue) + " UZS";
+  };
   const formatDate = (iso: string) =>
     new Date(iso).toLocaleDateString(dateLocale, { day: "2-digit", month: "short", year: "numeric" });
 
@@ -131,6 +146,11 @@ export default function TeachersPage() {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+
+  const [resetTarget, setResetTarget] = useState<Teacher | null>(null);
+  const [resetPwd, setResetPwd] = useState("");
+  const [resetting, setResetting] = useState(false);
+  const [resetError, setResetError] = useState<string | null>(null);
 
   const fetchTeachers = useCallback(async () => {
     setLoading(true);
@@ -153,6 +173,7 @@ export default function TeachersPage() {
       if (e.key !== "Escape") return;
       setEditingTeacher(null);
       setDeleteConfirmId(null);
+      setResetTarget(null);
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -184,7 +205,15 @@ export default function TeachersPage() {
 
   function openEdit(teacher: Teacher) {
     setEditingTeacher(teacher);
-    setEditForm({ fullName: teacher.fullName, phone: teacher.phone, subject: teacher.subject, salary: String(teacher.salary) });
+    setEditForm({
+      fullName: teacher.fullName,
+      phone: teacher.phone,
+      subject: teacher.subject,
+      salaryType: teacher.salaryType,
+      salaryValue: teacher.salaryValue != null ? String(teacher.salaryValue) : "",
+      email: teacher.user?.email ?? "",
+      password: "",
+    });
     setEditError(null);
   }
 
@@ -224,7 +253,15 @@ export default function TeachersPage() {
       const res = await fetch(`/api/teachers/${teacher.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fullName: teacher.fullName, phone: teacher.phone, subject: teacher.subject, salary: teacher.salary, isActive: !teacher.isActive }),
+        body: JSON.stringify({
+          fullName: teacher.fullName,
+          phone: teacher.phone,
+          subject: teacher.subject,
+          salaryType: teacher.salaryType,
+          salaryValue: teacher.salaryValue,
+          email: teacher.user?.email,
+          isActive: !teacher.isActive,
+        }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const updated: Teacher = await res.json();
@@ -247,6 +284,28 @@ export default function TeachersPage() {
     }
   }
 
+  async function handleResetPassword(e: React.FormEvent) {
+    e.preventDefault();
+    if (!resetTarget) return;
+    setResetting(true);
+    setResetError(null);
+    try {
+      const res = await fetch(`/api/teachers/${resetTarget.id}/reset-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: resetPwd }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail ?? data.error ?? `HTTP ${res.status}`);
+      setResetTarget(null);
+      setResetPwd("");
+    } catch (e) {
+      setResetError(e instanceof Error ? e.message : "Failed to reset password");
+    } finally {
+      setResetting(false);
+    }
+  }
+
   const query = search.trim().toLowerCase();
   const filtered = query
     ? teachers.filter((t) => t.fullName.toLowerCase().includes(query) || t.subject.toLowerCase().includes(query) || t.phone.includes(query))
@@ -258,7 +317,7 @@ export default function TeachersPage() {
   return (
     <>
       <div className="min-h-screen bg-gray-50 py-6 px-4 sm:py-10 sm:px-8">
-        <div className="max-w-5xl mx-auto space-y-8">
+        <div className="max-w-6xl mx-auto space-y-8">
 
           {/* Header */}
           <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -280,7 +339,8 @@ export default function TeachersPage() {
 
           {/* Add Teacher */}
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-            <h2 className="text-base font-semibold text-gray-900 mb-5">{t.teachers.addTeacher}</h2>
+            <h2 className="text-base font-semibold text-gray-900 mb-1">{t.teachers.addTeacher}</h2>
+            <p className="text-xs text-gray-400 mb-5">{t.teachers.addTeacherHint}</p>
             <form onSubmit={handleAdd} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -324,16 +384,53 @@ export default function TeachersPage() {
                 </div>
                 <div>
                   <label className={labelCls}>
-                    {t.teachers.salary} <span className="text-red-500">*</span>
+                    {t.auth.emailLabel} <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    placeholder={t.teachers.emailPlaceholder}
+                    value={form.email}
+                    onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
+                    required
+                    className={inputCls}
+                  />
+                </div>
+                <div>
+                  <label className={labelCls}>
+                    {t.teachers.tempPassword} <span className="text-red-500">*</span>
+                  </label>
+                  <PasswordInput
+                    autoComplete="new-password"
+                    placeholder={t.teachers.minChars}
+                    value={form.password}
+                    onChange={(e) => setForm((p) => ({ ...p, password: e.target.value }))}
+                    required
+                    minLength={6}
+                    className={inputCls}
+                  />
+                </div>
+                <div>
+                  <label className={labelCls}>{t.teachers.salaryType}</label>
+                  <select
+                    value={form.salaryType}
+                    onChange={(e) => setForm((p) => ({ ...p, salaryType: e.target.value as SalaryType }))}
+                    className={inputCls}
+                  >
+                    <option value="FIXED">{t.teachers.salaryTypeFixed}</option>
+                    <option value="PERCENTAGE">{t.teachers.salaryTypePercentage}</option>
+                  </select>
+                </div>
+                <div>
+                  <label className={labelCls}>
+                    {form.salaryType === "PERCENTAGE" ? t.teachers.commissionPercentLabel : t.teachers.salary}
                   </label>
                   <input
                     type="number"
                     min="0"
                     step="any"
-                    placeholder={t.teachers.salaryPlaceholder}
-                    value={form.salary}
-                    onChange={(e) => setForm((p) => ({ ...p, salary: e.target.value }))}
-                    required
+                    placeholder={t.teachers.salaryOptionalPlaceholder}
+                    value={form.salaryValue}
+                    onChange={(e) => setForm((p) => ({ ...p, salaryValue: e.target.value }))}
                     className={inputCls}
                   />
                 </div>
@@ -367,7 +464,7 @@ export default function TeachersPage() {
               <table className="w-full text-sm">
                 <tbody>
                   {Array.from({ length: 5 }).map((_, i) => (
-                    <TableRowSkeleton key={i} widths={[160, 100, 90, 90, 80, 90, 110]} />
+                    <TableRowSkeleton key={i} widths={[160, 100, 90, 140, 90, 80, 90, 110]} />
                   ))}
                 </tbody>
               </table>
@@ -395,6 +492,7 @@ export default function TeachersPage() {
                       <Th>{t.teachers.fullName}</Th>
                       <Th>{t.teachers.phone}</Th>
                       <Th>{t.teachers.subject}</Th>
+                      <Th>{t.teachers.loginColumn}</Th>
                       <Th>{t.teachers.salary}</Th>
                       <Th>{t.common.status}</Th>
                       <Th>{t.teachers.joined}</Th>
@@ -418,7 +516,16 @@ export default function TeachersPage() {
                             {teacher.subject}
                           </span>
                         </td>
-                        <td className="px-4 py-3 font-medium text-gray-900">{formatSalary(teacher.salary)}</td>
+                        <td className="px-4 py-3 text-xs">
+                          {teacher.user ? (
+                            <span className="text-gray-500">{teacher.user.email}</span>
+                          ) : (
+                            <span className="inline-flex items-center rounded-full bg-amber-50 border border-amber-200 px-2 py-0.5 text-amber-700 font-medium">
+                              {t.teachers.noLoginYet}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 font-medium text-gray-900">{formatSalary(teacher)}</td>
                         <td className="px-4 py-3">
                           <ActiveBadge isActive={teacher.isActive} loading={togglingId === teacher.id} onClick={() => handleToggleActive(teacher)} />
                         </td>
@@ -429,10 +536,15 @@ export default function TeachersPage() {
                               <Spinner /> {t.common.deleting}
                             </span>
                           ) : (
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1.5 flex-wrap">
                               <Button size="sm" variant="ghost" onClick={() => openEdit(teacher)}>
                                 {t.common.edit}
                               </Button>
+                              {teacher.user && (
+                                <Button size="sm" variant="ghost" onClick={() => { setResetTarget(teacher); setResetPwd(""); setResetError(null); }}>
+                                  {t.teachers.resetPassword}
+                                </Button>
+                              )}
                               <Button size="sm" variant="danger" onClick={() => setDeleteConfirmId(teacher.id)}>
                                 {t.common.delete}
                               </Button>
@@ -479,8 +591,58 @@ export default function TeachersPage() {
                   <input type="text" value={editForm.subject} onChange={(e) => setEditForm((p) => ({ ...p, subject: e.target.value }))} required className={inputCls} />
                 </div>
                 <div className="col-span-2">
-                  <label className={labelCls}>{t.teachers.salary}</label>
-                  <input type="number" min="0" step="any" value={editForm.salary} onChange={(e) => setEditForm((p) => ({ ...p, salary: e.target.value }))} required className={inputCls} />
+                  <label className={labelCls}>
+                    {t.auth.emailLabel} {!editingTeacher.user && <span className="text-red-500">*</span>}
+                  </label>
+                  <input
+                    type="email"
+                    value={editForm.email}
+                    onChange={(e) => setEditForm((p) => ({ ...p, email: e.target.value }))}
+                    required={!editingTeacher.user}
+                    className={inputCls}
+                  />
+                </div>
+                {!editingTeacher.user && (
+                  <div className="col-span-2">
+                    <label className={labelCls}>
+                      {t.teachers.tempPassword} <span className="text-red-500">*</span>
+                    </label>
+                    <PasswordInput
+                      autoComplete="new-password"
+                      placeholder={t.teachers.minChars}
+                      value={editForm.password}
+                      onChange={(e) => setEditForm((p) => ({ ...p, password: e.target.value }))}
+                      required
+                      minLength={6}
+                      className={inputCls}
+                    />
+                    <p className="mt-1.5 text-xs text-amber-600">{t.teachers.noLoginSetupHint}</p>
+                  </div>
+                )}
+                <div>
+                  <label className={labelCls}>{t.teachers.salaryType}</label>
+                  <select
+                    value={editForm.salaryType}
+                    onChange={(e) => setEditForm((p) => ({ ...p, salaryType: e.target.value as SalaryType }))}
+                    className={inputCls}
+                  >
+                    <option value="FIXED">{t.teachers.salaryTypeFixed}</option>
+                    <option value="PERCENTAGE">{t.teachers.salaryTypePercentage}</option>
+                  </select>
+                </div>
+                <div>
+                  <label className={labelCls}>
+                    {editForm.salaryType === "PERCENTAGE" ? t.teachers.commissionPercentLabel : t.teachers.salary}
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="any"
+                    placeholder={t.teachers.salaryOptionalPlaceholder}
+                    value={editForm.salaryValue}
+                    onChange={(e) => setEditForm((p) => ({ ...p, salaryValue: e.target.value }))}
+                    className={inputCls}
+                  />
                 </div>
               </div>
               {editError && <ErrorPill message={editError} />}
@@ -488,6 +650,47 @@ export default function TeachersPage() {
                 <Button type="button" variant="ghost" onClick={closeEdit}>{t.common.cancel}</Button>
                 <Button type="submit" loading={editSaving} disabled={editSaving}>
                   {editSaving ? t.common.saving : t.common.saveChanges}
+                </Button>
+              </div>
+            </form>
+          </ModalCard>
+        </Backdrop>
+      )}
+
+      {/* ── Reset Password Modal ───────────────────────────────────────────── */}
+      {resetTarget && (
+        <Backdrop onClick={() => setResetTarget(null)}>
+          <ModalCard onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <h2 className="text-base font-semibold text-gray-900">{t.teachers.resetPassword}</h2>
+                <p className="text-xs text-gray-400 mt-0.5">{resetTarget.fullName}</p>
+              </div>
+              <button onClick={() => setResetTarget(null)} className="text-gray-400 hover:text-gray-600">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <form onSubmit={handleResetPassword} className="space-y-4">
+              <div>
+                <label className={labelCls}>{t.teachers.newPassword} <span className="text-red-500">*</span></label>
+                <PasswordInput
+                  autoComplete="new-password"
+                  placeholder={t.teachers.minChars}
+                  value={resetPwd}
+                  onChange={(e) => setResetPwd(e.target.value)}
+                  required
+                  minLength={6}
+                  autoFocus
+                  className={inputCls}
+                />
+              </div>
+              {resetError && <ErrorPill message={resetError} />}
+              <div className="flex justify-end gap-3 pt-1">
+                <Button type="button" variant="ghost" onClick={() => setResetTarget(null)}>{t.common.cancel}</Button>
+                <Button type="submit" loading={resetting} disabled={resetting}>
+                  {resetting ? t.common.saving : t.teachers.resetPassword}
                 </Button>
               </div>
             </form>
@@ -511,6 +714,9 @@ export default function TeachersPage() {
                   <span className="font-medium text-gray-700">{deleteTeacher.fullName}</span>
                   {" "}({deleteTeacher.subject}) {t.teachers.deleteConfirmSuffix}
                 </p>
+                {deleteTeacher.user && (
+                  <p className="mt-1 text-xs text-amber-700">{t.teachers.linkedAccountNote}</p>
+                )}
               </div>
             </div>
             <div className="flex justify-end gap-3 mt-6">

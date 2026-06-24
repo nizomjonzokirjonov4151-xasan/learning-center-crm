@@ -5,7 +5,7 @@ import { getSession } from "@/lib/dal";
 
 export async function GET() {
   const session = await getSession();
-  if (!session || !["ADMIN", "MANAGER"].includes(session.role)) {
+  if (!session || !["ADMIN", "RECEPTION"].includes(session.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   try {
@@ -32,7 +32,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const session = await getSession();
-  if (!session || !["ADMIN", "MANAGER"].includes(session.role)) {
+  if (!session || !["ADMIN", "RECEPTION"].includes(session.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   try {

@@ -89,14 +89,21 @@ export function notifyNewTeacher(teacher: {
   fullName: string;
   phone: string;
   subject: string;
-  salary: number;
+  salaryType: "FIXED" | "PERCENTAGE";
+  salaryValue: number | null;
 }): void {
+  const salaryLine =
+    teacher.salaryValue == null
+      ? "Not set"
+      : teacher.salaryType === "PERCENTAGE"
+        ? `${teacher.salaryValue}% commission`
+        : `${new Intl.NumberFormat("en-US").format(teacher.salaryValue)} UZS (fixed)`;
   sendMessage(
     `👨‍🏫 <b>New Teacher Added</b>\n\n` +
       `👤 <b>Name:</b> ${teacher.fullName}\n` +
       `📞 <b>Phone:</b> ${teacher.phone}\n` +
       `📚 <b>Subject:</b> ${teacher.subject}\n` +
-      `💵 <b>Salary:</b> ${new Intl.NumberFormat("en-US").format(teacher.salary)} UZS`
+      `💵 <b>Salary:</b> ${salaryLine}`
   ).catch(() => {});
 }
 

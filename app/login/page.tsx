@@ -7,6 +7,7 @@ import { Suspense } from "react";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import { LanguageSwitcher } from "@/app/components/LanguageSwitcher";
 import { Button } from "@/app/components/ui/Button";
+import { PasswordInput } from "@/app/components/ui/PasswordInput";
 
 function BrandPanel() {
   const { t } = useTranslation();
@@ -132,10 +133,9 @@ function LoginForm() {
               <label htmlFor="password" className="block text-xs font-semibold text-gray-700 mb-1.5">
                 {t.auth.passwordLabel}
               </label>
-              <input
+              <PasswordInput
                 id="password"
                 name="password"
-                type="password"
                 autoComplete="current-password"
                 required
                 placeholder="••••••••"

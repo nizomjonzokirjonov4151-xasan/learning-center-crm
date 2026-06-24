@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { sendDailyReport } from "@/lib/telegram";
+import { requireSession } from "@/lib/api-auth";
 
 export async function POST() {
+  const auth = await requireSession(["ADMIN"]);
+  if (auth instanceof NextResponse) return auth;
   try {
     const ok = await sendDailyReport();
     if (!ok) {

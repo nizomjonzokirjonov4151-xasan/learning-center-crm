@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "@/lib/i18n/useTranslation";
+import { PasswordInput } from "@/app/components/ui/PasswordInput";
 
 const inputCls =
   "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 bg-white shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none";
@@ -88,8 +89,7 @@ export default function ChangePasswordForm({
       <form onSubmit={handleSubmit} className="p-6 space-y-4 max-w-md">
         <div>
           <label className={labelCls}>{t.security.currentPassword} <span className="text-red-500">*</span></label>
-          <input
-            type="password"
+          <PasswordInput
             value={form.currentPassword}
             onChange={(e) => setField("currentPassword", e.target.value)}
             required
@@ -99,8 +99,7 @@ export default function ChangePasswordForm({
         </div>
         <div>
           <label className={labelCls}>{t.security.newPassword} <span className="text-red-500">*</span></label>
-          <input
-            type="password"
+          <PasswordInput
             value={form.newPassword}
             onChange={(e) => setField("newPassword", e.target.value)}
             required
@@ -112,8 +111,7 @@ export default function ChangePasswordForm({
         </div>
         <div>
           <label className={labelCls}>{t.security.confirmPassword} <span className="text-red-500">*</span></label>
-          <input
-            type="password"
+          <PasswordInput
             value={form.confirmPassword}
             onChange={(e) => setField("confirmPassword", e.target.value)}
             required
